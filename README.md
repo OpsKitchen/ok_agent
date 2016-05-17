@@ -6,7 +6,7 @@ agent of OpsKitchen.com
 agent
 	|--bin
 	|--pkg
-	|--src
+	|--src  
 		|--clent
 			|--client.go (main)
 
@@ -29,3 +29,4 @@ agent
 		|--logger
 			|--logger.go 日志
 
+-
