@@ -25,19 +25,17 @@ type httpCommand struct {
 func DoCommand(cmdMap map[string]interface{}) error {
 	var HttpCommand = loadHttpCommand(cmdMap)
 
-	fmt.Println(HttpCommand.Command)
 	if HttpCommand.Unless != "" {
 		if err := exCommand(HttpCommand.Unless); err == nil {
-			logger.Info("when executing the command of \"", HttpCommand.Unless+"\". Your \"unless\" command is return a false. No executing command \""+HttpCommand.Command+"\"")
-			return err
+			return nil
 		}
 	}
 	if HttpCommand.OnlyIf != "" {
 		if err := exCommand(HttpCommand.OnlyIf); err != nil {
-			logger.Info("when executing the command of \"", HttpCommand.OnlyIf+"\". Your \"onlyIf\" command is return a false. No executing command \""+HttpCommand.Command+"\"")
-			return err
+			return nil
 		}
 	}
+	fmt.Println(HttpCommand.Command)
 
 	oldPath := os.Getenv("PATH")
 	if HttpCommand.Path != ""  {
@@ -55,7 +53,8 @@ func DoCommand(cmdMap map[string]interface{}) error {
 			// 3.cd dir
 			if err := exCommand(" ls "+HttpCommand.Cwd); err != nil {
 				logger.Info("cwd " + HttpCommand.Cwd + " no exist. Execute a command of \"mkdir -p " + HttpCommand.Cwd + "\"")
-				if err := exCommand(" mkdir -p "+HttpCommand.Cwd); err != nil {
+
+				if err := os.MkdirAll(HttpCommand.Cwd, os.ModePerm); err != nil {
 					logger.Info("Execute the command of mkdir -p \"" + HttpCommand.Cwd + "\" failed")
 					return err
 				}
@@ -66,23 +65,31 @@ func DoCommand(cmdMap map[string]interface{}) error {
 		in.WriteString(HttpCommand.Command + "\n")
 		in.WriteString("exit\n")
 
-		stdout, _ := cmd.StdoutPipe()
+		stdout, _ := cmd.StdoutPipe() //standard output
+		stderr,_ := cmd.StderrPipe()  //err output
 		cmd.Start()
 		reader := bufio.NewReader(stdout)
-		//实时循环读取输出流中的一行内容
+		//实时循环读取标准输出流中的一行内容
 		for {
-			line, err2 := reader.ReadString('\n')
-			if err2 != nil || io.EOF == err2 {
+			line, err := reader.ReadString('\n')
+			if err != nil || io.EOF == err {
+				break
+			}
+			fmt.Println(line)
+		}
+		readerErr := bufio.NewReader(stderr)
+		//实时循环读取错误输出流中的一行内容
+		for {
+			line, err := readerErr.ReadString('\n')
+			if err != nil || io.EOF == err {
 				break
 			}
 			fmt.Println(line)
 		}
 
+
 		if err := cmd.Wait(); err != nil {
 			err_string := "Execute the command \"" + HttpCommand.Command + "\" failed"
-			if HttpCommand.Path != "" {
-				err_string = "Execute the command \"" + HttpCommand.Path + "/" + HttpCommand.Command + "\" failed"
-			}
 			logger.Info(err_string)
 			return err
 		}
@@ -138,12 +145,11 @@ func loadHttpCommand(cmdMap map[string]interface{}) *httpCommand {
 }
 
 func exCommand(command string) error {
-	fmt.Println(command)
 	in := bytes.NewBuffer(nil)
 	cmd := exec.Command("/bin/sh", "-c", command)
 	cmd.Stdin = in
 	if err := cmd.Run(); err != nil {
-		logger.Info("Execute the command \"" + command + "\" failed")
+		// logger.Info("Execute the command \"" + command + "\" failed")
 		return err
 	}
 	return nil

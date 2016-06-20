@@ -1,0 +1,23 @@
+#!/usr/bin/env bash
+
+if [ ! -f deps  ]; then
+    echo 'deps must be run within its container folder' 1>&2
+    exit 1
+fi
+
+export PATH=$PATH:/usr/local/go/bin
+export GOROOT="/usr/local/go/"
+export GOPATH="/opt/ok/agent/"
+
+CURDIR=`pwd`
+export GOPATH="$CURDIR"
+
+yum install libxml2-devel
+yum install augeas-devel
+yum install gcc
+
+go get github.com/pantsing/goconf
+go get github.com/bitly/go-simplejson
+
+
+echo 'finished'

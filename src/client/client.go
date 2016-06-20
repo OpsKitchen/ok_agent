@@ -34,7 +34,10 @@ func cmdHttp(jsonStr string, apiName string,detailBool bool) {
 		// Cycle apilist 
 		for _, v := range arr_new {
 			api_name := v.(string)
-			jsonStr := agentHttp.DoHttpRequest("POST", api_name)
+			jsonStr, err := agentHttp.DoHttpRequest("POST", api_name)
+			if err != nil {
+                return
+			}
 			if detailBool {
 				fileName := config.BaseConfig.TEMP_JSON_FILE_PATH + config.BaseConfig.TEMP_JSON_EX + api_name 
 				jsonMap := map[string]interface{}{"filePath": fileName + ".json", "fileContent": jsonStr, "fileType": "file"}
@@ -50,19 +53,21 @@ func cmdHttp(jsonStr string, apiName string,detailBool bool) {
 func checkJson(jsonStr string, api_name string) bool {
 	js, err := simplejson.NewJson([]byte(jsonStr))
 	if err != nil {
-		logger.Error(api_name)
-		logger.Error("json format error")
+		logger.Error(api_name+" json format error")
+		exitAgent(api_name+" Json format error")
 		return false
 	}
 	result, err := js.Get("success").Bool()
 	if err != nil {
 		logger.Info("Decode error: Get int failed!")
+		exitAgent("Decode error: Get int failed!")
 		return true
 	}
 	if result == false {
 		// errorCode, _ := js.Get("errorCode").Int()
 		errorMessage, _ := js.Get("errorMessage").String()
-		logger.Info(api_name + ": Error Message: " + errorMessage)
+		logger.Info("Error Message: " + errorMessage)
+		exitAgent("Error Message: " + errorMessage)
 		return false
 	}
 	return true
@@ -72,7 +77,7 @@ func checkJson(jsonStr string, api_name string) bool {
 func readJsonFile(path string) string {
 	fi, err := os.Open(path)
 	if err != nil {
-		panic(err)
+		exitAgent("Read Json File failed ")
 		return ""
 	}
 	defer fi.Close()
@@ -94,16 +99,37 @@ func doJsonFile(api_name string ,jsonStr string) {
 			category := cmdMap["category"].(string)
 			switch category {
 			case "file":
-				agentFile.DoFile(cmdMap)
+				err := agentFile.DoFile(cmdMap)
+				if err != nil {
+					exitAgent("Failed to set your file. Please try again ok_agent")
+				}
 			case "command":
-				agentCommand.DoCommand(cmdMap)
+				err := agentCommand.DoCommand(cmdMap)
+				if err != nil {
+					exitAgent("Failed to execute command, please check your last failed command and try again ok_agent")
+				}
 			case "confFile":
-				agentAugeas.DoAugeas(cmdMap)
+				err := agentAugeas.DoAugeas(cmdMap)
+				if err != nil {
+					exitAgent("Failed to set your configuration file and try again ok_agent")
+				}
 			default:
 
 			}
 		}
 	}
+}
+
+
+func exitAgent(errMsg string) {
+    defer func() {
+        if r := recover(); r != nil {
+            fmt.Println(r)
+        }
+    }()
+    fmt.Println("** Exception error occur. "+errMsg+" **")
+	os.Exit(1)
+	// panic(fmt.Sprintf("** Exception error occur. "+errMsg+" **"))
 }
 
 func logerClientInit() {
@@ -133,17 +159,25 @@ func main() {
 
 		tempJsonPath := config.BaseConfig.TEMP_JSON_FILE_PATH
 		tempJsonEx := config.BaseConfig.TEMP_JSON_EX
-		// deleteJsonMap := map[string]interface{}{"command": "rm " + tempJsonPath + tempJsonEx + "*"}
-		// agentCommand.DoCommand(deleteJsonMap)
-
 
 		fmt.Println(`Starting ... Please don't interrupt your program when you meet “ completed !!” in the end !`)
 		fmt.Println("----------------------")
 
 		logerClientInit()
+		//backup repo
+		fileMap := map[string]interface{}{"filePath": config.BaseConfig.AGENT_REPO_BACKUP_DIR , "fileType": "dir", "unless": "ls "+config.BaseConfig.AGENT_REPO_BACKUP_DIR}
+		agentFile.DoFile(fileMap)
+		cmdMap := map[string]interface{}{"command": "mv -f "+config.BaseConfig.SOURCE_REPO_DIR+"/* "+config.BaseConfig.AGENT_REPO_BACKUP_DIR, 
+		"onlyIf": "ls "+config.BaseConfig.SOURCE_REPO_DIR+"/*"}
+		agentCommand.DoCommand(cmdMap)
+
 		//apiList
 		base_api_name := config.BaseConfig.BASE_API_NAME
-		jsonStr := agentHttp.DoHttpRequest("POST", base_api_name)
+		jsonStr, err := agentHttp.DoHttpRequest("POST", base_api_name)
+		if err != nil {
+		    fmt.Println("Http request error: ", err)
+		    os.Exit(1)
+		}
 		if *detailBool {
 			jsonMap := map[string]interface{}{"filePath": tempJsonPath + tempJsonEx + base_api_name + ".json", "fileContent": jsonStr, "fileType": "file"}
 			agentFile.DoFile(jsonMap)

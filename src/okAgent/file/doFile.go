@@ -94,12 +94,21 @@ func DoFile(cmdMap map[string]interface{}) error {
 
 		filePathMap := make(map[string]interface{}) //使用make创建一个空的map
 		filePathMap["command"] = "touch " + fileName
+		filePathMap["unless"] = "ls "+ fileName
 		if cwd != "" {
-			fileDirMap1 := map[string]interface{}{"command": "mkdir -p " + cwd}
-			agentCommand.DoCommand(fileDirMap1)
+			err := os.MkdirAll(cwd, os.ModePerm)
+			if err != nil {
+				return err
+			}
 			filePathMap["cwd"] = cwd
+			filePathMap["command"] = "touch " +cwd+ fileName
+			filePathMap["unless"] = "ls " +cwd+ fileName
+
 		}
-		agentCommand.DoCommand(filePathMap)
+		err := agentCommand.DoCommand(filePathMap)
+		if err != nil {
+			return err
+		}
 
 		// f, err1 = os.OpenFile(httpFile.FilePath, os.O_APPEND, 0666)  //打开文件
 		f, err1 = os.Create(httpFile.FilePath) //创建文件,覆盖文件
@@ -117,17 +126,25 @@ func DoFile(cmdMap map[string]interface{}) error {
 	case "dir":
 		if httpFile.FilePath != "" {
 			// 创建目录
-			fileDirMap := map[string]interface{}{"command": "mkdir -p " + httpFile.FilePath}
-			agentCommand.DoCommand(fileDirMap)
+			err := os.MkdirAll(httpFile.FilePath, os.ModePerm)
+			if err != nil {
+				return err
+			}
 			// 修改文件所有者
 			if httpFile.UserGroup != "" && httpFile.Owner != "" {
 				fileUserGroupMap := map[string]interface{}{"command": "chown " + httpFile.UserGroup + ":" + httpFile.Owner + " " + httpFile.FilePath}
-				agentCommand.DoCommand(fileUserGroupMap)
+				err := agentCommand.DoCommand(fileUserGroupMap)
+				if err != nil {
+					return err
+				}
 			}
 			// 修改文件模式
 			if httpFile.Mode != "" {
 				fileModeMap := map[string]interface{}{"command": "chmod " + httpFile.Mode + " " + httpFile.FilePath}
-				agentCommand.DoCommand(fileModeMap)
+				err:= agentCommand.DoCommand(fileModeMap)
+				if err != nil {
+					return err
+				}
 			}
 
 		}
@@ -135,7 +152,10 @@ func DoFile(cmdMap map[string]interface{}) error {
 		// 创建软连接
 		if httpFile.FilePath != "" && httpFile.Target != "" {
 			fileLinkMap := map[string]interface{}{"command": "ln -s " + httpFile.FilePath + " " + httpFile.Target}
-			agentCommand.DoCommand(fileLinkMap)
+			err := agentCommand.DoCommand(fileLinkMap)
+			if err != nil {
+				return err
+			}
 		}
 	default:
 	}

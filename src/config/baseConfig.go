@@ -16,12 +16,15 @@ type baseConfig struct {
 	OA_Device_Id     string
 
 	API_VERSION    string
-	JsonConfPath   string
+	JSON_CONF_PATH   string
 	BASE_API_NAME  string
 	LOGER_CWD      string
 	LOGER_FILE     string
 	TEMP_JSON_PATH string
 	TEMP_JSON_EX   string
+
+	AGENT_REPO_BACKUP_DIR string
+	SOURCE_REPO_DIR string
 
 	TEMP_JSON_FILE_PATH string
 	AGENT_VERSION  string
@@ -38,14 +41,18 @@ var BaseConfig = &baseConfig{
 	OA_App_Version:   "1.0",
 	OA_Device_Id:     "282459052",
 	API_VERSION:      "1.0",
-	JsonConfPath:     "/root/.ok_agent/agent.json",
+	JSON_CONF_PATH:     "/root/.ok_agent/agent.json",
 
 	LOGER_CWD:      "/var/log/ok_agent/",
 	LOGER_FILE:     "agent.log",
 	TEMP_JSON_PATH: "/root/.ok_agent/",
 	TEMP_JSON_EX:   "temp_",
 
+	AGENT_REPO_BACKUP_DIR: "/root/backup-repo",
+	SOURCE_REPO_DIR:"/etc/yum.repos.d",
+
 	TEMP_JSON_FILE_PATH: "/root/.tmp_json/",
 	AGENT_VERSION: "1.0.0",
+
 }
 

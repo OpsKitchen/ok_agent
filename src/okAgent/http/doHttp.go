@@ -37,7 +37,7 @@ var httpbody = &HttpBody{
 }
 
 /*Create an Http request */
-func DoHttpRequest(requestType string, apiName string) string {
+func DoHttpRequest(requestType string, apiName string) (string, error) {
 	client := &http.Client{}
 	// timestamp := strconv.FormatInt(httpbody.timestamp, 10)
 	timestamp := strconv.FormatInt(time.Now().Unix(), 10)
@@ -47,6 +47,7 @@ func DoHttpRequest(requestType string, apiName string) string {
 	req, err := http.NewRequest(requestType, config.BaseConfig.GW_HOST, strings.NewReader(paramString))
 	if err != nil {
 		logger.Info("The request failed")
+		return "", err
 	}
 	req.Header.Set("Content-Type", config.BaseConfig.Content_Type)
 	req.Header.Set("OA-Session-Id", config.BaseConfig.OA_Session_Id)
@@ -59,12 +60,17 @@ func DoHttpRequest(requestType string, apiName string) string {
 	req.Header.Set("OA-Sign", getOaSign(apiName,timestamp)) // sessionStorage.getItem(signKey)
 
 	resp, err := client.Do(req)
+	if err != nil {
+	    logger.Info("Http request failed")
+	    return "", err
+	}
 	defer resp.Body.Close()
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		logger.Info("Your " + apiName + " request failed")
+		return "", err
 	}
-	return string(body)
+	return string(body), nil
 }
 
 /* Method of MD5 */
@@ -96,7 +102,7 @@ func getParamString(apiName string) string {
 
 /* load json config */
 func ConfigLoadAndGet(apiName string) (json *httpConfJson) {
-	c, err := goconf.New(config.BaseConfig.JsonConfPath)
+	c, err := goconf.New(config.BaseConfig.JSON_CONF_PATH)
 	if err != nil {
 		fmt.Println("Error:", err)
 	}
