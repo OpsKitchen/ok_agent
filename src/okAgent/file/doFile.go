@@ -1,15 +1,13 @@
 package agentFile
 
 import (
-	"strings"
 	"errors"
-	"os"
-	"logger"
 	"io"
-    "okAgent/command"
+	"logger"
+	"okAgent/command"
+	"os"
+	"strings"
 )
-
-
 
 type httpFile struct {
 	FilePath    string
@@ -20,7 +18,6 @@ type httpFile struct {
 	Mode        string
 	Target      string
 }
-
 
 func loadHttpFile(cmdMap map[string]interface{}) *httpFile {
 	var HttpFile = &httpFile{}
@@ -62,10 +59,9 @@ func loadHttpFile(cmdMap map[string]interface{}) *httpFile {
 	return HttpFile
 }
 
-
 func DoFile(cmdMap map[string]interface{}) error {
 	var httpFile = loadHttpFile(cmdMap)
-	
+
 	if httpFile.FilePath == "" {
 		logger.Info("Failed to create a empty filePath ")
 		return nil
@@ -94,15 +90,15 @@ func DoFile(cmdMap map[string]interface{}) error {
 
 		filePathMap := make(map[string]interface{}) //使用make创建一个空的map
 		filePathMap["command"] = "touch " + fileName
-		filePathMap["unless"] = "ls "+ fileName
+		filePathMap["unless"] = "ls " + fileName
 		if cwd != "" {
 			err := os.MkdirAll(cwd, os.ModePerm)
 			if err != nil {
 				return err
 			}
 			filePathMap["cwd"] = cwd
-			filePathMap["command"] = "touch " +cwd+ fileName
-			filePathMap["unless"] = "ls " +cwd+ fileName
+			filePathMap["command"] = "touch " + cwd + fileName
+			filePathMap["unless"] = "ls " + cwd + fileName
 
 		}
 		err := agentCommand.DoCommand(filePathMap)
@@ -141,7 +137,7 @@ func DoFile(cmdMap map[string]interface{}) error {
 			// 修改文件模式
 			if httpFile.Mode != "" {
 				fileModeMap := map[string]interface{}{"command": "chmod " + httpFile.Mode + " " + httpFile.FilePath}
-				err:= agentCommand.DoCommand(fileModeMap)
+				err := agentCommand.DoCommand(fileModeMap)
 				if err != nil {
 					return err
 				}
@@ -162,4 +158,3 @@ func DoFile(cmdMap map[string]interface{}) error {
 	return nil
 
 }
-

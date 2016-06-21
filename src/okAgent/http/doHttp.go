@@ -13,17 +13,17 @@ import (
 	"strconv"
 	"time"
 
+	"config"
 	"github.com/pantsing/goconf"
 	"logger"
-	"config"
 )
 
 type httpConfJson struct {
-	SecretKey  string
-	OA_App_Key string
+	SecretKey    string
+	OA_App_Key   string
 	AgentVersion string
-	Api_name   string
-	Params     string
+	Api_name     string
+	Params       string
 }
 
 type HttpBody struct {
@@ -49,20 +49,20 @@ func DoHttpRequest(requestType string, apiName string) (string, error) {
 		logger.Info("The request failed")
 		return "", err
 	}
-	req.Header.Set("Content-Type", config.BaseConfig.Content_Type)
-	req.Header.Set("OA-Session-Id", config.BaseConfig.OA_Session_Id)
-	req.Header.Set("OA-App-Market-ID", config.BaseConfig.OA_App_Market_ID)
-	req.Header.Set("OA-App-Version", config.BaseConfig.OA_App_Version)
-	req.Header.Set("OA-Device-Id", config.BaseConfig.OA_Device_Id) //new Fingerprint({canvas, true}).get()
+	req.Header.Set("Content-Type", config.BaseConfig.CONTENT_TYPE)
+	req.Header.Set("OA-Session-Id", config.BaseConfig.OA_SESSION_ID)
+	req.Header.Set("OA-App-Market-ID", config.BaseConfig.OA_APP_MARKET_ID)
+	req.Header.Set("OA-App-Version", config.BaseConfig.OA_APP_VERSION)
+	req.Header.Set("OA-Device-Id", config.BaseConfig.OA_DEVICE_ID) //new Fingerprint({canvas, true}).get()
 
 	HttpConfJson := ConfigLoadAndGet(apiName) //根据apiName获得配置信息
 	req.Header.Set("OA-App-Key", HttpConfJson.OA_App_Key)
-	req.Header.Set("OA-Sign", getOaSign(apiName,timestamp)) // sessionStorage.getItem(signKey)
+	req.Header.Set("OA-Sign", getOaSign(apiName, timestamp)) // sessionStorage.getItem(signKey)
 
 	resp, err := client.Do(req)
 	if err != nil {
-	    logger.Info("Http request failed")
-	    return "", err
+		logger.Info("Http request failed")
+		return "", err
 	}
 	defer resp.Body.Close()
 	body, err := ioutil.ReadAll(resp.Body)
@@ -82,7 +82,7 @@ func httpMd5(str string) (md5str string) {
 }
 
 /* Use MD5 encryption parameters */
-func getOaSign(apiName string,timestamp string) string {
+func getOaSign(apiName string, timestamp string) string {
 	// timestamp := strconv.FormatInt(httpbody.timestamp, 10)
 	HttpConfJson := ConfigLoadAndGet(apiName)
 	md5str := HttpConfJson.SecretKey + apiName + string(config.BaseConfig.API_VERSION) + getParamString(apiName) + string(timestamp)

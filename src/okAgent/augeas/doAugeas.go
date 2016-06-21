@@ -2,9 +2,9 @@ package agentAugeas
 
 import (
 	"errors"
+	"fmt"
+	"honnef.co/go/augeas"
 	"logger"
-    "honnef.co/go/augeas"
-    "fmt"
 )
 
 const AugeasLoadPath = "/augeas/load/"
@@ -13,12 +13,12 @@ const AugeasLensSuffix = ".lns"
 const AugeasIncl = "/incl[last()+1]"
 
 type httpAugeas struct {
-	FilePath    string
-	SetKey 		string
-	SetValue    string
-	Context 	string
-	Lens   string
-	Action  string
+	FilePath string
+	SetKey   string
+	SetValue string
+	Context  string
+	Lens     string
+	Action   string
 }
 
 func loadHttpAugeas(confFileMap map[string]interface{}) *httpAugeas {
@@ -33,7 +33,7 @@ func loadHttpAugeas(confFileMap map[string]interface{}) *httpAugeas {
 			}
 		case "optionKey":
 			if confFileMap["optionKey"] != nil {
-				ha.SetKey  = mapStr
+				ha.SetKey = mapStr
 			}
 		case "optionValue":
 			if confFileMap["optionValue"] != nil {
@@ -41,7 +41,7 @@ func loadHttpAugeas(confFileMap map[string]interface{}) *httpAugeas {
 			}
 		case "context":
 			if confFileMap["context"] != nil {
-				ha.Context  = mapStr
+				ha.Context = mapStr
 			}
 		case "lens":
 			if confFileMap["lens"] != nil {
@@ -49,14 +49,13 @@ func loadHttpAugeas(confFileMap map[string]interface{}) *httpAugeas {
 			}
 		case "action":
 			if confFileMap["action"] != nil {
-					ha.Action = mapStr
-				}
+				ha.Action = mapStr
+			}
 		default:
 		}
 	}
 	return ha
 }
-
 
 func DoAugeas(confFileMap map[string]interface{}) error {
 	var ha = loadHttpAugeas(confFileMap)
@@ -65,36 +64,40 @@ func DoAugeas(confFileMap map[string]interface{}) error {
 		return errors.New("empty of augeas file path")
 	}
 	if ha.Lens != "" {
-		err :=doAugeasNoLoad(ha); if err != nil {
+		err := doAugeasNoLoad(ha)
+		if err != nil {
 			return err
 		}
 	} else {
-		err :=doAugeasNone(ha); if err != nil {
+		err := doAugeasNone(ha)
+		if err != nil {
 			return err
 		}
 	}
-	return nil 
+	return nil
 }
 
-
 func doAugeasNone(ha *httpAugeas) error {
-	ag, err := augeas.New("/", "" , augeas.None); if err != nil {
+	ag, err := augeas.New("/", "", augeas.None)
+	if err != nil {
 		logger.Info(err)
 		return err
 	}
 	if ha.Action == "ADD" || ha.Action == "SET" || ha.Action == "" {
-		fmt.Println("setting ", ha.Context+ ha.SetKey, ha.SetValue ," now ... ")
-		err = ag.Set(ha.Context + ha.SetKey ,ha.SetValue); if err != nil {
+		fmt.Println("setting ", ha.Context+ha.SetKey, ha.SetValue, " now ... ")
+		err = ag.Set(ha.Context+ha.SetKey, ha.SetValue)
+		if err != nil {
 			logger.Info(err)
 			return err
 		}
 	}
 	if ha.Action == "REMOVE" {
-		fmt.Println("remove ", ha.Context , ha.SetKey ," now ... ")
+		fmt.Println("remove ", ha.Context, ha.SetKey, " now ... ")
 		ag.Remove(ha.Context + ha.SetKey)
 	}
 
-	err = ag.Save(); if err != nil {
+	err = ag.Save()
+	if err != nil {
 		logger.Info(err)
 		return err
 	}
@@ -103,40 +106,45 @@ func doAugeasNone(ha *httpAugeas) error {
 }
 
 func doAugeasNoLoad(ha *httpAugeas) error {
-	ag, err := augeas.New("/", "" , augeas.NoLoad); if err != nil {
+	ag, err := augeas.New("/", "", augeas.NoLoad)
+	if err != nil {
 		logger.Info(err)
 		return err
 	}
-	err = ag.Set(AugeasLoadPath + ha.Lens + AugeasLens, ha.Lens + AugeasLensSuffix );if err != nil {
+	err = ag.Set(AugeasLoadPath+ha.Lens+AugeasLens, ha.Lens+AugeasLensSuffix)
+	if err != nil {
 		logger.Info(err)
 		return err
 	}
-	err = ag.Set(AugeasLoadPath + ha.Lens + AugeasIncl, ha.FilePath);if err != nil {
+	err = ag.Set(AugeasLoadPath+ha.Lens+AugeasIncl, ha.FilePath)
+	if err != nil {
 		logger.Info(err)
 		return err
 	}
-	err = ag.Load(); if err != nil {
+	err = ag.Load()
+	if err != nil {
 		logger.Info(err)
 		return err
 	}
 
 	if ha.Action == "ADD" || ha.Action == "SET" || ha.Action == "" {
-		fmt.Println("setting ", ha.Context+ ha.SetKey, ha.SetValue ," now ... ")
-		err = ag.Set(ha.Context + ha.SetKey ,ha.SetValue); if err != nil {
+		fmt.Println("setting ", ha.Context+ha.SetKey, ha.SetValue, " now ... ")
+		err = ag.Set(ha.Context+ha.SetKey, ha.SetValue)
+		if err != nil {
 			logger.Info(err)
 			return err
 		}
 	}
 	if ha.Action == "REMOVE" {
-		fmt.Println("remove ", ha.Context , ha.SetKey ," now ... ")
+		fmt.Println("remove ", ha.Context, ha.SetKey, " now ... ")
 		ag.Remove(ha.Context + ha.SetKey)
 	}
 
-	err = ag.Save(); if err != nil {
+	err = ag.Save()
+	if err != nil {
 		logger.Info(err)
 		return err
 	}
 	ag.Close()
 	return nil
 }
-

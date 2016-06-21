@@ -1,13 +1,13 @@
 package agentCommand
 
 import (
+	"bufio"
 	"bytes"
-	"os/exec"
+	"fmt"
+	"io"
 	"logger"
 	"os"
-	"fmt"
-	"bufio"
-	"io"
+	"os/exec"
 )
 
 type httpCommand struct {
@@ -19,7 +19,6 @@ type httpCommand struct {
 	OnlyIf  string
 	Path    string
 }
-
 
 /*Execute the command */
 func DoCommand(cmdMap map[string]interface{}) error {
@@ -38,7 +37,7 @@ func DoCommand(cmdMap map[string]interface{}) error {
 	fmt.Println(HttpCommand.Command)
 
 	oldPath := os.Getenv("PATH")
-	if HttpCommand.Path != ""  {
+	if HttpCommand.Path != "" {
 		os.Setenv("PATH", oldPath+":"+HttpCommand.Path)
 	}
 
@@ -51,7 +50,7 @@ func DoCommand(cmdMap map[string]interface{}) error {
 			// 1.judge dir
 			// 2.if on exist,mkdir -p
 			// 3.cd dir
-			if err := exCommand(" ls "+HttpCommand.Cwd); err != nil {
+			if err := exCommand(" ls " + HttpCommand.Cwd); err != nil {
 				logger.Info("cwd " + HttpCommand.Cwd + " no exist. Execute a command of \"mkdir -p " + HttpCommand.Cwd + "\"")
 
 				if err := os.MkdirAll(HttpCommand.Cwd, os.ModePerm); err != nil {
@@ -66,7 +65,7 @@ func DoCommand(cmdMap map[string]interface{}) error {
 		in.WriteString("exit\n")
 
 		stdout, _ := cmd.StdoutPipe() //standard output
-		stderr,_ := cmd.StderrPipe()  //err output
+		stderr, _ := cmd.StderrPipe() //err output
 		cmd.Start()
 		reader := bufio.NewReader(stdout)
 		//实时循环读取标准输出流中的一行内容
@@ -87,7 +86,6 @@ func DoCommand(cmdMap map[string]interface{}) error {
 			fmt.Println(line)
 		}
 
-
 		if err := cmd.Wait(); err != nil {
 			err_string := "Execute the command \"" + HttpCommand.Command + "\" failed"
 			logger.Info(err_string)
@@ -101,7 +99,6 @@ func DoCommand(cmdMap map[string]interface{}) error {
 	}
 	return nil
 }
-
 
 func loadHttpCommand(cmdMap map[string]interface{}) *httpCommand {
 	var HttpCommand = &httpCommand{}
@@ -154,5 +151,3 @@ func exCommand(command string) error {
 	}
 	return nil
 }
-
-
