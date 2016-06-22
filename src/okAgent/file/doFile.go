@@ -2,12 +2,12 @@ package agentFile
 
 import (
 	"errors"
+	"fmt"
 	"io"
 	"logger"
 	"okAgent/command"
 	"os"
 	"strings"
-	// "fmt"
 )
 
 type httpFile struct {
@@ -80,7 +80,7 @@ func DoFile(cmdMap map[string]interface{}) error {
 		var err1 error
 		// 1、mkdir -p cwd && touch fileName
 		fileName := httpFile.FilePath
-		filePathArray := strings.Split(httpFile.FilePath, "/") //分割目录
+		filePathArray := strings.Split(httpFile.FilePath, "/") //split dir
 		cwd := ""
 		if len(filePathArray) > 1 {
 			fileName = filePathArray[len(filePathArray)-1]
@@ -89,33 +89,21 @@ func DoFile(cmdMap map[string]interface{}) error {
 				cwd = fileNameArray[0]
 			}
 		}
-
-		filePathMap := make(map[string]interface{}) //使用make创建一个空的map
-		filePathMap["command"] = "touch " + fileName
-		filePathMap["unless"] = "ls " + fileName
 		if cwd != "" {
 			err := os.MkdirAll(cwd, os.ModePerm)
 			if err != nil {
 				return err
 			}
-			filePathMap["cwd"] = cwd
-			filePathMap["command"] = "touch " + cwd + fileName
-			filePathMap["unless"] = "ls " + cwd + fileName
-
-		}
-		err := agentCommand.DoCommand(filePathMap)
-		if err != nil {
-			return err
 		}
 
-		// f, err1 = os.OpenFile(httpFile.FilePath, os.O_APPEND, 0666)  //打开文件
-		f, err1 = os.Create(httpFile.FilePath) //创建文件,覆盖文件
+		f, err1 = os.Create(httpFile.FilePath)  //creat a file and cover the file
+		fmt.Println("touch", httpFile.FilePath) //only for a note
 		if err1 != nil {
 			logger.Info("Failed to create " + httpFile.FilePath)
 			return err1
 		}
 
-		io.WriteString(f, httpFile.FileContent) //写入文件(字符串)
+		io.WriteString(f, httpFile.FileContent) //writing content
 		if err1 != nil {
 			logger.Info("Failed to Write " + httpFile.FilePath + " with content \"" + httpFile.FileContent + "\"")
 			return err1
@@ -130,7 +118,7 @@ func DoFile(cmdMap map[string]interface{}) error {
 			}
 		}
 
-		// os.Chown 需要获取gid 和 uid
+		//chown (os.Chown need gid and uid)
 		if httpFile.User != "" || httpFile.UserGroup != "" {
 			fileUserGroupMap := make(map[string]interface{})
 			if httpFile.User != "" && httpFile.UserGroup == "" {
@@ -150,13 +138,13 @@ func DoFile(cmdMap map[string]interface{}) error {
 
 	case "dir":
 		if httpFile.FilePath != "" {
-			// 创建目录
+			// mkdir
 			err := os.MkdirAll(httpFile.FilePath, os.ModePerm)
 			if err != nil {
 				return err
 			}
 
-			// 修改文件模式
+			// chmod
 			if httpFile.Mode != "" {
 				fileModeMap := map[string]interface{}{"command": "chmod " + httpFile.Mode + " " + httpFile.FilePath}
 				err := agentCommand.DoCommand(fileModeMap)
@@ -165,7 +153,7 @@ func DoFile(cmdMap map[string]interface{}) error {
 				}
 			}
 
-			//修改文件所有者 os.Chown 需要获取gid 和 uid
+			//chown (os.Chown need gid and uid)
 			if httpFile.User != "" || httpFile.UserGroup != "" {
 				fileUserGroupMap := make(map[string]interface{})
 				if httpFile.User != "" && httpFile.UserGroup == "" {
@@ -185,13 +173,17 @@ func DoFile(cmdMap map[string]interface{}) error {
 
 		}
 	case "link":
-		// 创建软连接 os.Symlink 不支持windows平台只支持linux和unix
+		// symlink os.Symlink no support windows,but only linux and unix
 		if httpFile.FilePath != "" && httpFile.Target != "" {
-			fileLinkMap := map[string]interface{}{"command": "ln -sf " + httpFile.FilePath + " " + httpFile.Target}
-			err := agentCommand.DoCommand(fileLinkMap)
+			if _, err := os.Stat(httpFile.Target); err == nil {
+				os.Remove(httpFile.Target)
+			}
+			fmt.Println("ln -sf", httpFile.FilePath, httpFile.Target)
+			err := os.Symlink(httpFile.FilePath, httpFile.Target)
 			if err != nil {
 				return err
 			}
+
 		}
 
 	default:
