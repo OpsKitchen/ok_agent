@@ -30,8 +30,7 @@ func DoHttpRequest(requestType string, apiName string) (string, error) {
 	timestamp := strconv.FormatInt(time.Now().Unix(), 10)
 
 	params := getParamString(apiName) //获取参数的拼接
-	paramString := "api=" + apiName + "&version=" + string(config.BaseConfig.API_VERSION)
-	+"&timestamp=" + string(timestamp) + "&params=" + params
+	paramString := "api=" + apiName + "&version=" + string(config.BaseConfig.API_VERSION) +"&timestamp=" + string(timestamp) + "&params=" + params
 	req, err := http.NewRequest(requestType, config.BaseConfig.GW_HOST, strings.NewReader(paramString))
 	if err != nil {
 		logger.Info("The request failed")
@@ -72,8 +71,7 @@ func httpMd5(str string) (md5str string) {
 /* Use MD5 encryption parameters */
 func getOaSign(apiName string, timestamp string) string {
 	HttpConf := ConfigLoadAndGet(apiName)
-	md5str := HttpConf.SecretKey + apiName + string(config.BaseConfig.API_VERSION)
-	+getParamString(apiName) + string(timestamp)
+	md5str := HttpConf.SecretKey + apiName + string(config.BaseConfig.API_VERSION)+getParamString(apiName) + string(timestamp)
 	OASign := httpMd5(md5str)
 	return OASign
 }
