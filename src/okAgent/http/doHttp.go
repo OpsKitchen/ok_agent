@@ -1,49 +1,37 @@
 package agentHttp
 
 import (
+	"config"
 	"crypto/md5"
+	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
-
 	"io/ioutil"
-	"net/http"
-	"strings"
-
-	"errors"
-	"strconv"
-	"time"
-
-	"config"
-	"github.com/pantsing/goconf"
 	"logger"
+	"net/http"
+	"os"
+	"strconv"
+	"strings"
+	"time"
 )
 
-type httpConfJson struct {
+type httpConf struct {
 	SecretKey    string
 	OA_App_Key   string
 	AgentVersion string
-	Api_name     string
+	ApiName      string
 	Params       string
-}
-
-type HttpBody struct {
-	paramString string
-	timestamp   int64
-}
-
-var httpbody = &HttpBody{
-	paramString: "",
-	timestamp:   time.Now().Unix(),
 }
 
 /*Create an Http request */
 func DoHttpRequest(requestType string, apiName string) (string, error) {
 	client := &http.Client{}
-	// timestamp := strconv.FormatInt(httpbody.timestamp, 10)
 	timestamp := strconv.FormatInt(time.Now().Unix(), 10)
 
 	params := getParamString(apiName) //获取参数的拼接
-	paramString := "api=" + apiName + "&version=" + string(config.BaseConfig.API_VERSION) + "&timestamp=" + string(timestamp) + "&params=" + params
+	paramString := "api=" + apiName + "&version=" + string(config.BaseConfig.API_VERSION)
+	+"&timestamp=" + string(timestamp) + "&params=" + params
 	req, err := http.NewRequest(requestType, config.BaseConfig.GW_HOST, strings.NewReader(paramString))
 	if err != nil {
 		logger.Info("The request failed")
@@ -53,11 +41,11 @@ func DoHttpRequest(requestType string, apiName string) (string, error) {
 	req.Header.Set("OA-Session-Id", config.BaseConfig.OA_SESSION_ID)
 	req.Header.Set("OA-App-Market-ID", config.BaseConfig.OA_APP_MARKET_ID)
 	req.Header.Set("OA-App-Version", config.BaseConfig.OA_APP_VERSION)
-	req.Header.Set("OA-Device-Id", config.BaseConfig.OA_DEVICE_ID) //new Fingerprint({canvas, true}).get()
+	req.Header.Set("OA-Device-Id", config.BaseConfig.OA_DEVICE_ID)
 
-	HttpConfJson := ConfigLoadAndGet(apiName) //根据apiName获得配置信息
-	req.Header.Set("OA-App-Key", HttpConfJson.OA_App_Key)
-	req.Header.Set("OA-Sign", getOaSign(apiName, timestamp)) // sessionStorage.getItem(signKey)
+	HttpConf := ConfigLoadAndGet(apiName) //base for apiName
+	req.Header.Set("OA-App-Key", HttpConf.OA_App_Key)
+	req.Header.Set("OA-Sign", getOaSign(apiName, timestamp))
 
 	resp, err := client.Do(req)
 	if err != nil {
@@ -83,35 +71,46 @@ func httpMd5(str string) (md5str string) {
 
 /* Use MD5 encryption parameters */
 func getOaSign(apiName string, timestamp string) string {
-	// timestamp := strconv.FormatInt(httpbody.timestamp, 10)
-	HttpConfJson := ConfigLoadAndGet(apiName)
-	md5str := HttpConfJson.SecretKey + apiName + string(config.BaseConfig.API_VERSION) + getParamString(apiName) + string(timestamp)
+	HttpConf := ConfigLoadAndGet(apiName)
+	md5str := HttpConf.SecretKey + apiName + string(config.BaseConfig.API_VERSION)
+	+getParamString(apiName) + string(timestamp)
 	OASign := httpMd5(md5str)
 	return OASign
 }
 
 /* Assembly parameters */
 func getParamString(apiName string) string {
-	HttpConfJson := ConfigLoadAndGet(apiName)
+	HttpConf := ConfigLoadAndGet(apiName)
 	var paramString = ""
 	if apiName != config.BaseConfig.BASE_API_NAME || apiName == "" {
-		paramString = HttpConfJson.Params
+		paramString = HttpConf.Params
 	}
 	return paramString
 }
 
 /* load json config */
-func ConfigLoadAndGet(apiName string) (json *httpConfJson) {
-	c, err := goconf.New(config.BaseConfig.JSON_CONF_PATH)
+func ConfigLoadAndGet(apiName string) (HttpConf *httpConf) {
+	bytes, err := ioutil.ReadFile(config.BaseConfig.JSON_CONF_PATH)
 	if err != nil {
-		fmt.Println("Error:", err)
+		exitAgent(err, "Failed to parse json file")
 	}
-	json = new(httpConfJson)
-	json.Api_name = apiName
-	c.Get("/HttpConfig", json)
-	if json.AgentVersion != config.BaseConfig.AGENT_VERSION {
-		err := errors.New("Running Failed!! Your agent version isn’t match the opskitchen agent version number!")
-		panic(err)
+	HttpConf = new(httpConf)
+	if err := json.Unmarshal(bytes, &HttpConf); err != nil {
+		exitAgent(err, "Failed to parse json file")
 	}
-	return
+	if HttpConf.AgentVersion != config.BaseConfig.AGENT_VERSION {
+		err := errors.New("Running Failed!! Your agent version does't match the opskitchen agent version number!")
+		exitAgent(err, "Agent version no match")
+	}
+	return HttpConf
+}
+
+func exitAgent(err error, errMsg string) {
+	defer func() {
+		if r := recover(); r != nil {
+			fmt.Println(r)
+		}
+	}()
+	fmt.Println("** Exception error occur. "+errMsg+" **", err)
+	os.Exit(1)
 }
