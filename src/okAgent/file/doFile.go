@@ -7,13 +7,14 @@ import (
 	"okAgent/command"
 	"os"
 	"strings"
+	// "fmt"
 )
 
 type httpFile struct {
 	FilePath    string
 	FileContent string
 	FileType    string
-	Owner       string
+	User        string
 	UserGroup   string
 	Mode        string
 	Target      string
@@ -39,7 +40,7 @@ func loadHttpFile(cmdMap map[string]interface{}) *httpFile {
 			}
 		case "owner":
 			if mapStr != "" {
-				HttpFile.Owner = mapStr
+				HttpFile.User = mapStr
 			}
 		case "userGroup":
 			if mapStr != "" {
@@ -48,6 +49,7 @@ func loadHttpFile(cmdMap map[string]interface{}) *httpFile {
 		case "mode":
 			if mapStr != "" {
 				HttpFile.Mode = mapStr
+
 			}
 		case "target":
 			if mapStr != "" {
@@ -119,6 +121,33 @@ func DoFile(cmdMap map[string]interface{}) error {
 			return err1
 		}
 
+		// 修改文件模式
+		if httpFile.Mode != "" {
+			fileModeMap := map[string]interface{}{"command": "chmod " + httpFile.Mode + " " + httpFile.FilePath}
+			err := agentCommand.DoCommand(fileModeMap)
+			if err != nil {
+				return err
+			}
+		}
+
+		// os.Chown 需要获取gid 和 uid
+		if httpFile.User != "" || httpFile.UserGroup != "" {
+			fileUserGroupMap := make(map[string]interface{})
+			if httpFile.User != "" && httpFile.UserGroup == "" {
+				fileUserGroupMap = map[string]interface{}{"command": "chown " + httpFile.User + " " + httpFile.FilePath}
+			}
+			if httpFile.User == "" && httpFile.UserGroup != "" {
+				fileUserGroupMap = map[string]interface{}{"command": "chgrp " + httpFile.UserGroup + " " + httpFile.FilePath}
+			}
+			if httpFile.User != "" && httpFile.UserGroup != "" {
+				fileUserGroupMap = map[string]interface{}{"command": "chown " + httpFile.User + ":" + httpFile.UserGroup + " " + httpFile.FilePath}
+			}
+			err := agentCommand.DoCommand(fileUserGroupMap)
+			if err != nil {
+				return err
+			}
+		}
+
 	case "dir":
 		if httpFile.FilePath != "" {
 			// 创建目录
@@ -126,14 +155,7 @@ func DoFile(cmdMap map[string]interface{}) error {
 			if err != nil {
 				return err
 			}
-			// 修改文件所有者
-			if httpFile.UserGroup != "" && httpFile.Owner != "" {
-				fileUserGroupMap := map[string]interface{}{"command": "chown " + httpFile.UserGroup + ":" + httpFile.Owner + " " + httpFile.FilePath}
-				err := agentCommand.DoCommand(fileUserGroupMap)
-				if err != nil {
-					return err
-				}
-			}
+
 			// 修改文件模式
 			if httpFile.Mode != "" {
 				fileModeMap := map[string]interface{}{"command": "chmod " + httpFile.Mode + " " + httpFile.FilePath}
@@ -143,16 +165,35 @@ func DoFile(cmdMap map[string]interface{}) error {
 				}
 			}
 
+			//修改文件所有者 os.Chown 需要获取gid 和 uid
+			if httpFile.User != "" || httpFile.UserGroup != "" {
+				fileUserGroupMap := make(map[string]interface{})
+				if httpFile.User != "" && httpFile.UserGroup == "" {
+					fileUserGroupMap = map[string]interface{}{"command": "chown " + httpFile.User + " " + httpFile.FilePath}
+				}
+				if httpFile.User == "" && httpFile.UserGroup != "" {
+					fileUserGroupMap = map[string]interface{}{"command": "chgrp " + httpFile.UserGroup + " " + httpFile.FilePath}
+				}
+				if httpFile.User != "" && httpFile.UserGroup != "" {
+					fileUserGroupMap = map[string]interface{}{"command": "chown " + httpFile.User + ":" + httpFile.UserGroup + " " + httpFile.FilePath}
+				}
+				err := agentCommand.DoCommand(fileUserGroupMap)
+				if err != nil {
+					return err
+				}
+			}
+
 		}
 	case "link":
-		// 创建软连接
+		// 创建软连接 os.Symlink 不支持windows平台只支持linux和unix
 		if httpFile.FilePath != "" && httpFile.Target != "" {
-			fileLinkMap := map[string]interface{}{"command": "ln -s " + httpFile.FilePath + " " + httpFile.Target}
+			fileLinkMap := map[string]interface{}{"command": "ln -sf " + httpFile.FilePath + " " + httpFile.Target}
 			err := agentCommand.DoCommand(fileLinkMap)
 			if err != nil {
 				return err
 			}
 		}
+
 	default:
 	}
 	return nil
