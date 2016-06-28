@@ -31,8 +31,8 @@ func (dispatcher *Dispatcher) Dispatch(baseConfigFile string) {
 	sdk.SetDefaultLogger(debugLogger)
 
 	var params = &api.RequestParam{}
-	params.SetServerUniqueName(credentialConfig.ServerUniqueName)
-	resp, err = client.CallApi(baseConfig.EntryApiName, baseConfig.EntryApiVersion, params.Map())
+	params.ServerUniqueName = credentialConfig.ServerUniqueName
+	resp, err = client.CallApi(baseConfig.EntryApiName, baseConfig.EntryApiVersion, params)
 	if err != nil {
 	} else {
 		fmt.Println(resp)
