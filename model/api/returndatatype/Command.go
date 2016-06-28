@@ -1,4 +1,4 @@
-package apidata
+package returndatatype
 
 type Command struct {
 	Command string

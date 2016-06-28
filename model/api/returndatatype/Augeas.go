@@ -1,4 +1,4 @@
-package apidata
+package returndatatype
 
 type Augeas struct {
 	Incl        string

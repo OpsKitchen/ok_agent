@@ -1,7 +1,7 @@
-package apidata
+package returndatatype
 
 type Api struct {
-	Api        string
+	Name       string
 	Version    string
 	ReturnType string
 }

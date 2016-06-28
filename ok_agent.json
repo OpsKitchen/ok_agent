@@ -1,10 +1,10 @@
 {
-  "AgentVersion"    : "1.1.0",
-  "CredentialFile"  : "credential.json",
-  "EntryApiName"    : "ops.server.listAgentApi",
-  "EntryApiVersion" : "1.0",
-  "GatewayHost"     : "api.OpsKitchen.com",
-  "DisableSSL"      : true,
-  "LogDir"          : "/var/log/okk_agent",
-  "LogLevel"        : "DEBUG"
+  "AgentVersion"       : "1.1.0",
+  "CredentialFile"     : "credential.json",
+  "EntranceApiName"    : "ops.server.listAgentApi",
+  "EntranceApiVersion" : "1.0",
+  "GatewayHost"        : "api.OpsKitchen.com",
+  "DisableSSL"         : true,
+  "LogDir"             : "/var/log/ok_agent",
+  "LogLevel"           : "DEBUG"
 }

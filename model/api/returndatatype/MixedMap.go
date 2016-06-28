@@ -1,4 +1,4 @@
-package apidata
+package returndatatype
 
 type MixedMap struct {
 	//basic list

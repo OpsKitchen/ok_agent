@@ -3,7 +3,6 @@ package main
 import (
 	//go builtin pkg
 	"encoding/json"
-	"fmt"
 	"io/ioutil"
 	"os"
 
@@ -12,6 +11,7 @@ import (
 	"github.com/OpsKitchen/ok_api_sdk_go/sdk"
 	"github.com/OpsKitchen/ok_agent/model/api"
 	"github.com/OpsKitchen/ok_api_sdk_go/sdk/model"
+	"github.com/OpsKitchen/ok_agent/model/api/returndatatype"
 )
 
 type Dispatcher struct {
@@ -25,19 +25,30 @@ func (dispatcher *Dispatcher) Dispatch(baseConfigFile string) {
 	var baseConfig *config.Base = dispatcher.parseBaseConfig(baseConfigFile)
 	var credentialConfig *config.Credential = dispatcher.parseCredentialConfig(baseConfig.CredentialFile)
 	var client *sdk.Client = dispatcher.prepareApiClient(baseConfig, credentialConfig)
-	var resp *model.ApiResult
+	var entranceApiResult *model.ApiResult
 	var err error
+	var apiList []returndatatype.Api
 
 	sdk.SetDefaultLogger(debugLogger)
 
-	var params = &api.RequestParam{}
-	params.ServerUniqueName = credentialConfig.ServerUniqueName
-	resp, err = client.CallApi(baseConfig.EntryApiName, baseConfig.EntryApiVersion, params)
+	var entranceApiParams = &api.RequestParam{}
+	entranceApiParams.ServerUniqueName = credentialConfig.ServerUniqueName
+	entranceApiResult, err = client.CallApi(baseConfig.EntranceApiName, baseConfig.EntranceApiVersion, entranceApiParams)
 	if err != nil {
-	} else {
-		fmt.Println(resp)
+		debugLogger.Fatal("call entrance api failed", err.Error())
 	}
+	debugLogger.Debug(entranceApiResult.Data)
 
+	if entranceApiResult.Success == false {
+		debugLogger.Fatal("entrance api return error: ", entranceApiResult.ErrorCode, entranceApiResult.ErrorMessage)
+	}
+	
+	apiList = make([]returndatatype.Api, 10)
+	json.Unmarshal(entranceApiResult.DataBytes, &apiList)
+
+	for _, api := range apiList {
+		debugLogger.Debug(api)
+	}
 }
 
 func (dispatcher *Dispatcher) parseBaseConfig(baseConfigFile string) *config.Base {
