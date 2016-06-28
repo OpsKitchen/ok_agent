@@ -3,12 +3,15 @@ package main
 import (
 	//go builtin pkg
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"os"
 
 	//local pkg
 	"github.com/OpsKitchen/ok_agent/model/config"
 	"github.com/OpsKitchen/ok_api_sdk_go/sdk"
+	"github.com/OpsKitchen/ok_agent/model/api"
+	"github.com/OpsKitchen/ok_api_sdk_go/sdk/model"
 )
 
 type Dispatcher struct {
@@ -19,12 +22,25 @@ func NewDispatcher() *Dispatcher {
 }
 
 func (dispatcher *Dispatcher) Dispatch(baseConfigFile string) {
-	var baseConfig *config.Base = dispatcher.ParseBaseConfig(baseConfigFile)
-	var credentialConfig *config.Credential = dispatcher.ParseCredentialConfig(baseConfig.CredentialFile)
-	dispatcher.PrepareApiClient(baseConfig, credentialConfig)
+	var baseConfig *config.Base = dispatcher.parseBaseConfig(baseConfigFile)
+	var credentialConfig *config.Credential = dispatcher.parseCredentialConfig(baseConfig.CredentialFile)
+	var client *sdk.Client = dispatcher.prepareApiClient(baseConfig, credentialConfig)
+	var resp *model.ApiResult
+	var err error
+
+	sdk.SetDefaultLogger(debugLogger)
+
+	var params = &api.RequestParam{}
+	params.SetServerUniqueName(credentialConfig.ServerUniqueName)
+	resp, err = client.CallApi(baseConfig.EntryApiName, baseConfig.EntryApiVersion, params.Map())
+	if err != nil {
+	} else {
+		fmt.Println(resp)
+	}
+
 }
 
-func (dispatcher *Dispatcher) ParseBaseConfig(baseConfigFile string) *config.Base {
+func (dispatcher *Dispatcher) parseBaseConfig(baseConfigFile string) *config.Base {
 	var baseConfig *config.Base
 	var err error
 	var jsonBytes []byte
@@ -47,7 +63,7 @@ func (dispatcher *Dispatcher) ParseBaseConfig(baseConfigFile string) *config.Bas
 	return baseConfig
 }
 
-func (dispatcher *Dispatcher) ParseCredentialConfig(credentialConfigFile string) *config.Credential {
+func (dispatcher *Dispatcher) parseCredentialConfig(credentialConfigFile string) *config.Credential {
 	var credentialConfig *config.Credential
 	var err error
 	var jsonBytes []byte
@@ -70,7 +86,7 @@ func (dispatcher *Dispatcher) ParseCredentialConfig(credentialConfigFile string)
 	return credentialConfig
 }
 
-func (dispatcher *Dispatcher) PrepareApiClient(base *config.Base, credential *config.Credential) *sdk.Client {
+func (dispatcher *Dispatcher) prepareApiClient(base *config.Base, credential *config.Credential) *sdk.Client {
 	var client *sdk.Client = sdk.NewClient()
 	//init config
 	client.RequestBuilder.Config.SetAppMarketIdValue("1").SetAppVersionValue(base.AgentVersion).SetGatewayHost(

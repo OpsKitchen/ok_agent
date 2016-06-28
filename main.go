@@ -17,7 +17,7 @@ func main() {
 
 	//parse config file from cli argument
 	baseConfigFile = flag.String("c", "/etc/ok_agent.json", "base config file path")
-	debugMode = flag.Bool("d", false, "enable debug mode")
+	debugMode = flag.Bool("d", false, "enable debug log")
 	flag.Parse()
 
 	//create debug logger
