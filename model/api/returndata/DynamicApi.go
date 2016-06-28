@@ -1,6 +1,6 @@
 package returndata
 
-type Api struct {
+type DynamicApi struct {
 	Name           string
 	Version        string
 	ReturnDataType string

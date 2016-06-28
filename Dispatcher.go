@@ -20,7 +20,7 @@ type Dispatcher struct {
 	BaseConfigFile string
 	Config         *config.Base
 	Credential     *config.Credential
-	DynamicApiList []returndata.Api
+	DynamicApiList []returndata.DynamicApi
 }
 
 func (dispatcher *Dispatcher) Dispatch() {
@@ -29,10 +29,7 @@ func (dispatcher *Dispatcher) Dispatch() {
 	dispatcher.prepareApiClient()
 	dispatcher.prepareApiParam()
 	dispatcher.prepareDynamicApiList()
-
-	for _, api := range dispatcher.DynamicApiList {
-		debugLogger.Debug(api)
-	}
+	dispatcher.processDynamicApi()
 }
 
 func (dispatcher *Dispatcher) parseBaseConfig() {
@@ -103,21 +100,48 @@ func (dispatcher *Dispatcher) prepareApiParam() {
 }
 
 func (dispatcher *Dispatcher) prepareDynamicApiList() {
-	var entranceApiResult *model.ApiResult
+	var apiResult *model.ApiResult
 	var err error
 
-	entranceApiResult, err = dispatcher.ApiClient.CallApi(dispatcher.Config.EntranceApiName,
+	apiResult, err = dispatcher.ApiClient.CallApi(dispatcher.Config.EntranceApiName,
 		dispatcher.Config.EntranceApiVersion, dispatcher.ApiParam)
 	if err != nil {
 		debugLogger.Fatal("call entrance api failed", err.Error())
 	}
 
-	if entranceApiResult.Success == false {
-		debugLogger.Fatal("entrance api return error: ", entranceApiResult.ErrorCode, entranceApiResult.ErrorMessage)
+	if apiResult.Success == false {
+		debugLogger.Fatal("entrance api return error: ", apiResult.ErrorCode, apiResult.ErrorMessage)
 	}
 
-	json.Unmarshal(entranceApiResult.DataBytes, &dispatcher.DynamicApiList)
+	json.Unmarshal(apiResult.DataBytes, &dispatcher.DynamicApiList)
 	if len(dispatcher.DynamicApiList) == 0 {
 		debugLogger.Fatal("entrance api return empty api list")
+	}
+}
+
+func (dispatcher *Dispatcher) processDynamicApi() {
+	var dynamicApi returndata.DynamicApi
+	for _, dynamicApi = range dispatcher.DynamicApiList {
+		var apiResult *model.ApiResult
+		var err error
+		apiResult, err = dispatcher.ApiClient.CallApi(dynamicApi.Name, dynamicApi.Version, dispatcher.ApiParam)
+		if err != nil {
+			debugLogger.Error("call entrance api failed", err.Error())
+		}
+
+		switch dynamicApi.ReturnDataType {
+		case api.ReturnDataTypeAugeas:
+			1
+		case api.ReturnDataTypeCommand:
+			2
+		case api.ReturnDataTypeFile:
+			3
+		case api.ReturnDataTypeMixed:
+			4
+		}
+
+
+		json.Unmarshal(apiResult.DataBytes, &data)
+		debugLogger.Debug(apiResult)
 	}
 }
