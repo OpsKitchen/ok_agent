@@ -6,4 +6,3 @@ const (
 	ReturnDataTypeFile = "FileList"
 	ReturnDataTypeMixed = "MixedMap"
 )
-

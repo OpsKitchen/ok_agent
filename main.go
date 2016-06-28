@@ -13,7 +13,7 @@ var debugLogger *logrus.Logger = logrus.New()
 func main() {
 	var baseConfigFile *string
 	var debugMode *bool
-	var dispatcher *Dispatcher = NewDispatcher()
+	var dispatcher *Dispatcher
 
 	//parse config file from cli argument
 	baseConfigFile = flag.String("c", "/etc/ok_agent.json", "base config file path")
@@ -25,5 +25,8 @@ func main() {
 		debugLogger.Level = logrus.DebugLevel
 	}
 
-	dispatcher.Dispatch(*baseConfigFile)
+	dispatcher = &Dispatcher{
+		BaseConfigFile: *baseConfigFile,
+	}
+	dispatcher.Dispatch()
 }

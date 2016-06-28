@@ -1,4 +1,4 @@
-package returndatatype
+package returndata
 
 type File struct {
 	FilePath    string

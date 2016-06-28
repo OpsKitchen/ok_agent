@@ -11,57 +11,41 @@ import (
 	"github.com/OpsKitchen/ok_api_sdk_go/sdk"
 	"github.com/OpsKitchen/ok_agent/model/api"
 	"github.com/OpsKitchen/ok_api_sdk_go/sdk/model"
-	"github.com/OpsKitchen/ok_agent/model/api/returndatatype"
+	"github.com/OpsKitchen/ok_agent/model/api/returndata"
 )
 
 type Dispatcher struct {
+	ApiClient      *sdk.Client
+	ApiParam       *api.RequestParam
+	BaseConfigFile string
+	Config         *config.Base
+	Credential     *config.Credential
+	DynamicApiList []returndata.Api
 }
 
-func NewDispatcher() *Dispatcher {
-	return &Dispatcher{}
-}
+func (dispatcher *Dispatcher) Dispatch() {
+	dispatcher.parseBaseConfig()
+	dispatcher.parseCredentialConfig()
+	dispatcher.prepareApiClient()
+	dispatcher.prepareApiParam()
+	dispatcher.prepareDynamicApiList()
 
-func (dispatcher *Dispatcher) Dispatch(baseConfigFile string) {
-	var baseConfig *config.Base = dispatcher.parseBaseConfig(baseConfigFile)
-	var credentialConfig *config.Credential = dispatcher.parseCredentialConfig(baseConfig.CredentialFile)
-	var client *sdk.Client = dispatcher.prepareApiClient(baseConfig, credentialConfig)
-	var entranceApiResult *model.ApiResult
-	var err error
-	var apiList []returndatatype.Api
-
-	sdk.SetDefaultLogger(debugLogger)
-
-	var entranceApiParams = &api.RequestParam{}
-	entranceApiParams.ServerUniqueName = credentialConfig.ServerUniqueName
-	entranceApiResult, err = client.CallApi(baseConfig.EntranceApiName, baseConfig.EntranceApiVersion, entranceApiParams)
-	if err != nil {
-		debugLogger.Fatal("call entrance api failed", err.Error())
-	}
-	debugLogger.Debug(entranceApiResult.Data)
-
-	if entranceApiResult.Success == false {
-		debugLogger.Fatal("entrance api return error: ", entranceApiResult.ErrorCode, entranceApiResult.ErrorMessage)
-	}
-	
-	apiList = make([]returndatatype.Api, 10)
-	json.Unmarshal(entranceApiResult.DataBytes, &apiList)
-
-	for _, api := range apiList {
+	for _, api := range dispatcher.DynamicApiList {
 		debugLogger.Debug(api)
 	}
 }
 
-func (dispatcher *Dispatcher) parseBaseConfig(baseConfigFile string) *config.Base {
+func (dispatcher *Dispatcher) parseBaseConfig() {
 	var baseConfig *config.Base
 	var err error
 	var jsonBytes []byte
 
-	debugLogger.Info("base config file: ", baseConfigFile)
-	if _, err := os.Stat(baseConfigFile); os.IsNotExist(err) {
+	debugLogger.Info("base config file: ", dispatcher.BaseConfigFile)
+	if _, err := os.Stat(dispatcher.BaseConfigFile); os.IsNotExist(err) {
 		debugLogger.Fatal("base config file not found")
 	}
 
-	jsonBytes, err = ioutil.ReadFile(baseConfigFile)
+	jsonBytes, err = ioutil.ReadFile(dispatcher.BaseConfigFile)
 	if err != nil {
 		debugLogger.Fatal("base config file not readable")
 	}
@@ -71,20 +55,20 @@ func (dispatcher *Dispatcher) parseBaseConfig(baseConfigFile string) *config.Bas
 		debugLogger.Fatal("json decode failed: ", err.Error())
 	}
 
-	return baseConfig
+	dispatcher.Config = baseConfig
 }
 
-func (dispatcher *Dispatcher) parseCredentialConfig(credentialConfigFile string) *config.Credential {
+func (dispatcher *Dispatcher) parseCredentialConfig() {
 	var credentialConfig *config.Credential
 	var err error
 	var jsonBytes []byte
 
-	debugLogger.Info("credential config file: ", credentialConfigFile)
-	if _, err := os.Stat(credentialConfigFile); os.IsNotExist(err) {
+	debugLogger.Info("credential config file: ", dispatcher.Config.CredentialFile)
+	if _, err := os.Stat(dispatcher.Config.CredentialFile); os.IsNotExist(err) {
 		debugLogger.Fatal("credential config file not found")
 	}
 
-	jsonBytes, err = ioutil.ReadFile(credentialConfigFile)
+	jsonBytes, err = ioutil.ReadFile(dispatcher.Config.CredentialFile)
 	if err != nil {
 		debugLogger.Fatal("credential config file not readable")
 	}
@@ -94,16 +78,46 @@ func (dispatcher *Dispatcher) parseCredentialConfig(credentialConfigFile string)
 		debugLogger.Fatal("json decode failed: ", err.Error())
 	}
 
-	return credentialConfig
+	dispatcher.Credential = credentialConfig
 }
 
-func (dispatcher *Dispatcher) prepareApiClient(base *config.Base, credential *config.Credential) *sdk.Client {
+func (dispatcher *Dispatcher) prepareApiClient() {
 	var client *sdk.Client = sdk.NewClient()
+	//inject logger
+	sdk.SetDefaultLogger(debugLogger)
+
 	//init config
-	client.RequestBuilder.Config.SetAppMarketIdValue("1").SetAppVersionValue(base.AgentVersion).SetGatewayHost(
-		base.GatewayHost).SetDisableSSL(base.DisableSSL)
+	client.RequestBuilder.Config.SetAppMarketIdValue("1").SetAppVersionValue(
+		dispatcher.Config.AgentVersion).SetGatewayHost(
+		dispatcher.Config.GatewayHost).SetDisableSSL(dispatcher.Config.DisableSSL)
 
 	//init credential
-	client.RequestBuilder.Credential.SetAppKey(credential.AppKey).SetSecret(credential.Secret)
-	return client
+	client.RequestBuilder.Credential.SetAppKey(dispatcher.Credential.AppKey).SetSecret(
+		dispatcher.Credential.Secret)
+	dispatcher.ApiClient = client
+}
+
+func (dispatcher *Dispatcher) prepareApiParam() {
+	dispatcher.ApiParam = &api.RequestParam{}
+	dispatcher.ApiParam.ServerUniqueName = dispatcher.Credential.ServerUniqueName
+}
+
+func (dispatcher *Dispatcher) prepareDynamicApiList() {
+	var entranceApiResult *model.ApiResult
+	var err error
+
+	entranceApiResult, err = dispatcher.ApiClient.CallApi(dispatcher.Config.EntranceApiName,
+		dispatcher.Config.EntranceApiVersion, dispatcher.ApiParam)
+	if err != nil {
+		debugLogger.Fatal("call entrance api failed", err.Error())
+	}
+
+	if entranceApiResult.Success == false {
+		debugLogger.Fatal("entrance api return error: ", entranceApiResult.ErrorCode, entranceApiResult.ErrorMessage)
+	}
+
+	json.Unmarshal(entranceApiResult.DataBytes, &dispatcher.DynamicApiList)
+	if len(dispatcher.DynamicApiList) == 0 {
+		debugLogger.Fatal("entrance api return empty api list")
+	}
 }
