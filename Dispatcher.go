@@ -7,11 +7,12 @@ import (
 	"os"
 
 	//local pkg
+	"github.com/OpsKitchen/ok_agent/adapter"
+	"github.com/OpsKitchen/ok_agent/model/api"
+	"github.com/OpsKitchen/ok_agent/model/api/returndata"
 	"github.com/OpsKitchen/ok_agent/model/config"
 	"github.com/OpsKitchen/ok_api_sdk_go/sdk"
-	"github.com/OpsKitchen/ok_agent/model/api"
 	"github.com/OpsKitchen/ok_api_sdk_go/sdk/model"
-	"github.com/OpsKitchen/ok_agent/model/api/returndata"
 )
 
 type Dispatcher struct {
@@ -37,19 +38,19 @@ func (dispatcher *Dispatcher) parseBaseConfig() {
 	var err error
 	var jsonBytes []byte
 
-	debugLogger.Info("base config file: ", dispatcher.BaseConfigFile)
+	debugLogger.Info("Use base config file: ", dispatcher.BaseConfigFile)
 	if _, err := os.Stat(dispatcher.BaseConfigFile); os.IsNotExist(err) {
-		debugLogger.Fatal("base config file not found")
+		debugLogger.Fatal("Base config file not found")
 	}
 
 	jsonBytes, err = ioutil.ReadFile(dispatcher.BaseConfigFile)
 	if err != nil {
-		debugLogger.Fatal("base config file not readable")
+		debugLogger.Fatal("Base config file not readable")
 	}
 
 	err = json.Unmarshal(jsonBytes, &baseConfig)
 	if err != nil {
-		debugLogger.Fatal("json decode failed: ", err.Error())
+		debugLogger.Fatal("Base config file parse failed: ", err.Error())
 	}
 
 	dispatcher.Config = baseConfig
@@ -60,19 +61,19 @@ func (dispatcher *Dispatcher) parseCredentialConfig() {
 	var err error
 	var jsonBytes []byte
 
-	debugLogger.Info("credential config file: ", dispatcher.Config.CredentialFile)
+	debugLogger.Info("Use credential config file: ", dispatcher.Config.CredentialFile)
 	if _, err := os.Stat(dispatcher.Config.CredentialFile); os.IsNotExist(err) {
-		debugLogger.Fatal("credential config file not found")
+		debugLogger.Fatal("Credential config file not found")
 	}
 
 	jsonBytes, err = ioutil.ReadFile(dispatcher.Config.CredentialFile)
 	if err != nil {
-		debugLogger.Fatal("credential config file not readable")
+		debugLogger.Fatal("Credential config file not readable")
 	}
 
 	err = json.Unmarshal(jsonBytes, &credentialConfig)
 	if err != nil {
-		debugLogger.Fatal("json decode failed: ", err.Error())
+		debugLogger.Fatal("Credential config file parse failed: ", err.Error())
 	}
 
 	dispatcher.Credential = credentialConfig
@@ -84,7 +85,7 @@ func (dispatcher *Dispatcher) prepareApiClient() {
 	sdk.SetDefaultLogger(debugLogger)
 
 	//init config
-	client.RequestBuilder.Config.SetAppMarketIdValue("1").SetAppVersionValue(
+	client.RequestBuilder.Config.SetAppMarketIdValue(dispatcher.Config.AppMarketId).SetAppVersionValue(
 		dispatcher.Config.AgentVersion).SetGatewayHost(
 		dispatcher.Config.GatewayHost).SetDisableSSL(dispatcher.Config.DisableSSL)
 
@@ -104,44 +105,58 @@ func (dispatcher *Dispatcher) prepareDynamicApiList() {
 	var err error
 
 	apiResult, err = dispatcher.ApiClient.CallApi(dispatcher.Config.EntranceApiName,
-		dispatcher.Config.EntranceApiVersion, dispatcher.ApiParam)
+		dispatcher.Config.EntranceApiVersion, dispatcher.ApiParam, &dispatcher.DynamicApiList)
+
 	if err != nil {
-		debugLogger.Fatal("call entrance api failed", err.Error())
+		debugLogger.Fatal("Call entrance api failed", err.Error())
 	}
 
 	if apiResult.Success == false {
-		debugLogger.Fatal("entrance api return error: ", apiResult.ErrorCode, apiResult.ErrorMessage)
+		debugLogger.Fatal("Entrance api return error: ", apiResult.ErrorCode, apiResult.ErrorMessage)
 	}
 
-	json.Unmarshal(apiResult.DataBytes, &dispatcher.DynamicApiList)
 	if len(dispatcher.DynamicApiList) == 0 {
-		debugLogger.Fatal("entrance api return empty api list")
+		debugLogger.Fatal("Entrance api return empty api list")
 	}
+	debugLogger.Debug(dispatcher.DynamicApiList)
 }
 
 func (dispatcher *Dispatcher) processDynamicApi() {
 	var dynamicApi returndata.DynamicApi
 	for _, dynamicApi = range dispatcher.DynamicApiList {
+		debugLogger.Info("Now processing: ", dynamicApi.Name)
+		var adp adapter.AdapterInterface
 		var apiResult *model.ApiResult
 		var err error
-		apiResult, err = dispatcher.ApiClient.CallApi(dynamicApi.Name, dynamicApi.Version, dispatcher.ApiParam)
-		if err != nil {
-			debugLogger.Error("call entrance api failed", err.Error())
-		}
 
 		switch dynamicApi.ReturnDataType {
-		case api.ReturnDataTypeAugeas:
-			1
-		case api.ReturnDataTypeCommand:
-			2
-		case api.ReturnDataTypeFile:
-			3
-		case api.ReturnDataTypeMixed:
-			4
+		case returndata.AugeasList:
+			adp = &adapter.Augeas{}
+
+		case returndata.CommandList:
+			adp = &adapter.Command{}
+
+		case returndata.FileList:
+			adp = &adapter.File{}
 		}
 
+		apiResult, err = dispatcher.ApiClient.CallApi(dynamicApi.Name, dynamicApi.Version, dispatcher.ApiParam, nil)
 
-		json.Unmarshal(apiResult.DataBytes, &data)
-		debugLogger.Debug(apiResult)
+		if err != nil {
+			debugLogger.Fatal("Call api failed: ", dynamicApi.Name, dynamicApi.Version)
+		}
+		if apiResult.Success == false {
+			debugLogger.Fatal("Api return error: ", apiResult.ErrorCode, apiResult.ErrorMessage)
+		}
+
+		err = adp.CastItemList(apiResult.Data)
+		if err != nil {
+			debugLogger.Fatal("Cast return data type failed: ", err.Error())
+		} else {
+			err = adp.Process()
+			if err != nil {
+				debugLogger.Fatal(err.Error())
+			}
+		}
 	}
 }

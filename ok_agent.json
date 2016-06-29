@@ -1,5 +1,6 @@
 {
   "AgentVersion"       : "1.1.0",
+  "AppMarketId"        : "520",
   "CredentialFile"     : "credential.json",
   "EntranceApiName"    : "ops.server.listAgentApi",
   "EntranceApiVersion" : "1.0",

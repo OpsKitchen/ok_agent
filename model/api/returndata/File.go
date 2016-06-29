@@ -3,7 +3,7 @@ package returndata
 type File struct {
 	FilePath    string
 	User        string
-	Group       string
+	UserGroup   string
 	Mode        int
 	FileType    string
 	FileContent string

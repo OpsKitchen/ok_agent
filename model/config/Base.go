@@ -2,11 +2,12 @@ package config
 
 type Base struct {
 	AgentVersion       string
+	AppMarketId        string
 	CredentialFile     string
+	DisableSSL         bool
 	EntranceApiName    string
 	EntranceApiVersion string
 	GatewayHost        string
-	DisableSSL         bool
 	LogDir             string
 	LogLevel           string
 }
