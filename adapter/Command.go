@@ -68,7 +68,7 @@ func (item *Command) setCwd(cmd *exec.Cmd) {
 }
 
 func (item *Command) setPath(cmd *exec.Cmd) {
-	if item.Path != "" {//@todo bugfix for golang, Path not work, Env is OK
-		cmd.Path = item.Path
+	if item.Path != "" {
+		cmd.Env = append(cmd.Env, "PATH="+item.Path)
 	}
 }
