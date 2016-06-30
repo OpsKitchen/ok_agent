@@ -38,7 +38,7 @@ func (fileAdapter *File) Process() error {
 func (fileAdapter *File) processItem(item returndata.File) error {
 	var err error
 	var parentDir string
-	util.Logger.Debug(item.User)
+	util.Logger.Info(item.User)
 	util.Logger.Debug(item.FilePath)
 
 	if item.FilePath == "" {

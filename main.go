@@ -6,9 +6,8 @@ import (
 
 	//local pkg
 	"github.com/Sirupsen/logrus"
+	"github.com/OpsKitchen/ok_agent/util"
 )
-
-var debugLogger *logrus.Logger = logrus.New()
 
 func main() {
 	var baseConfigFile *string
@@ -22,7 +21,7 @@ func main() {
 
 	//create debug logger
 	if *debugMode {
-		debugLogger.Level = logrus.DebugLevel
+		util.Logger.Level = logrus.DebugLevel
 	}
 
 	dispatcher = &Dispatcher{

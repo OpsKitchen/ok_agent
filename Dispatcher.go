@@ -39,17 +39,17 @@ func (dispatcher *Dispatcher) parseBaseConfig() {
 	var jsonBytes []byte
 
 	if util.FileExist(dispatcher.BaseConfigFile) == false {
-		debugLogger.Fatal("Base config file not found: ", dispatcher.BaseConfigFile)
+		util.Logger.Fatal("Base config file not found: ", dispatcher.BaseConfigFile)
 	}
 
 	jsonBytes, err = ioutil.ReadFile(dispatcher.BaseConfigFile)
 	if err != nil {
-		debugLogger.Fatal("Base config file not readable: ", dispatcher.BaseConfigFile)
+		util.Logger.Fatal("Base config file not readable: ", dispatcher.BaseConfigFile)
 	}
 
 	err = json.Unmarshal(jsonBytes, &baseConfig)
 	if err != nil {
-		debugLogger.Fatal("Base config file parse failed: ", err.Error())
+		util.Logger.Fatal("Base config file parse failed: ", err.Error())
 	}
 
 	dispatcher.Config = baseConfig
@@ -61,17 +61,17 @@ func (dispatcher *Dispatcher) parseCredentialConfig() {
 	var jsonBytes []byte
 
 	if util.FileExist(dispatcher.Config.CredentialFile) == false {
-		debugLogger.Fatal("Credential config file not found: ", dispatcher.Config.CredentialFile)
+		util.Logger.Fatal("Credential config file not found: ", dispatcher.Config.CredentialFile)
 	}
 
 	jsonBytes, err = ioutil.ReadFile(dispatcher.Config.CredentialFile)
 	if err != nil {
-		debugLogger.Fatal("Credential config file not readable: ", dispatcher.Config.CredentialFile)
+		util.Logger.Fatal("Credential config file not readable: ", dispatcher.Config.CredentialFile)
 	}
 
 	err = json.Unmarshal(jsonBytes, &credentialConfig)
 	if err != nil {
-		debugLogger.Fatal("Credential config file parse failed: ", err.Error())
+		util.Logger.Fatal("Credential config file parse failed: ", err.Error())
 	}
 
 	dispatcher.Credential = credentialConfig
@@ -80,7 +80,7 @@ func (dispatcher *Dispatcher) parseCredentialConfig() {
 func (dispatcher *Dispatcher) prepareApiClient() {
 	var client *sdk.Client = sdk.NewClient()
 	//inject logger
-	sdk.SetDefaultLogger(debugLogger)
+	sdk.SetDefaultLogger(util.Logger)
 
 	//init config
 	client.RequestBuilder.Config.SetAppMarketIdValue(dispatcher.Config.AppMarketId).SetAppVersionValue(
@@ -106,23 +106,23 @@ func (dispatcher *Dispatcher) prepareDynamicApiList() {
 		dispatcher.Config.EntranceApiVersion, dispatcher.ApiParam, &dispatcher.DynamicApiList)
 
 	if err != nil {
-		debugLogger.Fatal("Call entrance api failed", err.Error())
+		util.Logger.Fatal("Call entrance api failed", err.Error())
 	}
 
 	if apiResult.Success == false {
-		debugLogger.Fatal("Entrance api return error: ", apiResult.ErrorCode, apiResult.ErrorMessage)
+		util.Logger.Fatal("Entrance api return error: ", apiResult.ErrorCode, apiResult.ErrorMessage)
 	}
 
 	if len(dispatcher.DynamicApiList) == 0 {
-		debugLogger.Fatal("Entrance api return empty api list")
+		util.Logger.Fatal("Entrance api return empty api list")
 	}
-	debugLogger.Debug(dispatcher.DynamicApiList)
+	util.Logger.Debug(dispatcher.DynamicApiList)
 }
 
 func (dispatcher *Dispatcher) processDynamicApi() {
 	var dynamicApi returndata.DynamicApi
 	for _, dynamicApi = range dispatcher.DynamicApiList {
-		debugLogger.Info("Now processing: ", dynamicApi.Name)
+		util.Logger.Info("Now processing: ", dynamicApi.Name)
 		var adp adapter.AdapterInterface
 		var apiResult *model.ApiResult
 		var err error
@@ -141,19 +141,19 @@ func (dispatcher *Dispatcher) processDynamicApi() {
 		apiResult, err = dispatcher.ApiClient.CallApi(dynamicApi.Name, dynamicApi.Version, dispatcher.ApiParam, nil)
 
 		if err != nil {
-			debugLogger.Fatal("Call api failed: ", dynamicApi.Name, dynamicApi.Version)
+			util.Logger.Fatal("Call api failed: ", dynamicApi.Name, dynamicApi.Version)
 		}
 		if apiResult.Success == false {
-			debugLogger.Fatal("Api return error: ", apiResult.ErrorCode, apiResult.ErrorMessage)
+			util.Logger.Fatal("Api return error: ", apiResult.ErrorCode, apiResult.ErrorMessage)
 		}
 
 		err = adp.CastItemList(apiResult.Data)
 		if err != nil {
-			debugLogger.Fatal("Cast return data type failed: ", err.Error())
+			util.Logger.Fatal("Cast return data type failed: ", err.Error())
 		} else {
 			err = adp.Process()
 			if err != nil {
-				debugLogger.Fatal(err.Error())
+				util.Logger.Fatal(err.Error())
 			}
 		}
 	}
