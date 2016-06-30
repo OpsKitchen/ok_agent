@@ -4,7 +4,6 @@ import (
 	//go builtin pkg
 	"encoding/json"
 	"io/ioutil"
-	"os"
 
 	//local pkg
 	"github.com/OpsKitchen/ok_agent/adapter"
@@ -13,6 +12,7 @@ import (
 	"github.com/OpsKitchen/ok_agent/model/config"
 	"github.com/OpsKitchen/ok_api_sdk_go/sdk"
 	"github.com/OpsKitchen/ok_api_sdk_go/sdk/model"
+	"github.com/OpsKitchen/ok_agent/util"
 )
 
 type Dispatcher struct {
@@ -38,14 +38,13 @@ func (dispatcher *Dispatcher) parseBaseConfig() {
 	var err error
 	var jsonBytes []byte
 
-	debugLogger.Info("Use base config file: ", dispatcher.BaseConfigFile)
-	if _, err := os.Stat(dispatcher.BaseConfigFile); os.IsNotExist(err) {
-		debugLogger.Fatal("Base config file not found")
+	if util.FileExist(dispatcher.BaseConfigFile) == false {
+		debugLogger.Fatal("Base config file not found: ", dispatcher.BaseConfigFile)
 	}
 
 	jsonBytes, err = ioutil.ReadFile(dispatcher.BaseConfigFile)
 	if err != nil {
-		debugLogger.Fatal("Base config file not readable")
+		debugLogger.Fatal("Base config file not readable: ", dispatcher.BaseConfigFile)
 	}
 
 	err = json.Unmarshal(jsonBytes, &baseConfig)
@@ -61,14 +60,13 @@ func (dispatcher *Dispatcher) parseCredentialConfig() {
 	var err error
 	var jsonBytes []byte
 
-	debugLogger.Info("Use credential config file: ", dispatcher.Config.CredentialFile)
-	if _, err := os.Stat(dispatcher.Config.CredentialFile); os.IsNotExist(err) {
-		debugLogger.Fatal("Credential config file not found")
+	if util.FileExist(dispatcher.Config.CredentialFile) == false {
+		debugLogger.Fatal("Credential config file not found: ", dispatcher.Config.CredentialFile)
 	}
 
 	jsonBytes, err = ioutil.ReadFile(dispatcher.Config.CredentialFile)
 	if err != nil {
-		debugLogger.Fatal("Credential config file not readable")
+		debugLogger.Fatal("Credential config file not readable: ", dispatcher.Config.CredentialFile)
 	}
 
 	err = json.Unmarshal(jsonBytes, &credentialConfig)

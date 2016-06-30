@@ -38,6 +38,8 @@ func (fileAdapter *File) Process() error {
 func (fileAdapter *File) processItem(item returndata.File) error {
 	var err error
 	var parentDir string
+	util.Logger.Debug(item.User)
+	util.Logger.Debug(item.FilePath)
 
 	if item.FilePath == "" {
 		util.Logger.Error("File path is empty")
@@ -54,7 +56,7 @@ func (fileAdapter *File) processItem(item returndata.File) error {
 
 	//create parent dir
 	parentDir = filepath.Dir(item.FilePath)
-	if fileAdapter.checkExist(parentDir) == false {
+	if util.FileExist(parentDir) == false {
 		err = os.MkdirAll(parentDir, 0755)
 		if err != nil {
 			util.Logger.Error("Failed to create parent directory: ", parentDir)
@@ -77,7 +79,7 @@ func (fileAdapter *File) processItem(item returndata.File) error {
 
 func (fileAdapter *File) processDir(item returndata.File) error {
 	//create dir
-	if fileAdapter.checkExist(item.FilePath) == false {
+	if util.FileExist(item.FilePath) == false {
 		err := os.Mkdir(item.FilePath, 0755)
 		if err != nil {
 			util.Logger.Error("Failed to create directory: ", item.FilePath)
@@ -98,7 +100,7 @@ func (fileAdapter *File) processFile(item returndata.File) error {
 	var err error
 	var fileExist bool
 
-	fileExist = fileAdapter.checkExist(item.FilePath)
+	fileExist = util.FileExist(item.FilePath)
 
 	//create new file
 	if fileExist == false {
@@ -141,7 +143,7 @@ func (fileAdapter *File) processLink(item returndata.File) error {
 	}
 
 	//remove link if exists
-	if fileAdapter.checkExist(item.FilePath) == true {
+	if util.FileExist(item.FilePath) == true {
 		err = os.Remove(item.FilePath)
 		if err != nil {
 			util.Logger.Error("Failed to remove old link: ", item.FilePath)
@@ -170,10 +172,4 @@ func (fileAdapter *File) changeMode(item returndata.File) error {
 func (fileAdapter *File) changeOwnerAndGroup(item returndata.File) error {
 	//chown -h user:group
 	return nil
-}
-
-func (fileAdapter *File) checkExist(path string) bool {
-	var err error
-	_, err = os.Stat(path)
-	return err == nil
 }
