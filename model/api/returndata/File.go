@@ -7,5 +7,6 @@ type File struct {
 	Mode        string
 	FileType    string
 	FileContent string
+	NoTruncate  bool
 	Target      string
 }

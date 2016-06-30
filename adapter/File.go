@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"strconv"
 
 	//local pkg
 	"github.com/OpsKitchen/ok_agent/model/api/returndata"
@@ -38,8 +39,6 @@ func (fileAdapter *File) Process() error {
 func (fileAdapter *File) processItem(item returndata.File) error {
 	var err error
 	var parentDir string
-	util.Logger.Info(item.User)
-	util.Logger.Debug(item.FilePath)
 
 	if item.FilePath == "" {
 		util.Logger.Error("File path is empty")
@@ -78,9 +77,10 @@ func (fileAdapter *File) processItem(item returndata.File) error {
 }
 
 func (fileAdapter *File) processDir(item returndata.File) error {
+	var err error
 	//create dir
 	if util.FileExist(item.FilePath) == false {
-		err := os.Mkdir(item.FilePath, 0755)
+		err = os.Mkdir(item.FilePath, 0755)
 		if err != nil {
 			util.Logger.Error("Failed to create directory: ", item.FilePath)
 			return err
@@ -89,16 +89,26 @@ func (fileAdapter *File) processDir(item returndata.File) error {
 		}
 	}
 
-	fileAdapter.changeMode(item)
-	fileAdapter.changeOwnerAndGroup(item)
+	err = fileAdapter.changeMode(item)
+	if err != nil {
+		return err
+	}
+	err = fileAdapter.changeGroup(item)
+	if err != nil {
+		return err
+	}
+	err = fileAdapter.changeOwner(item)
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 
 func (fileAdapter *File) processFile(item returndata.File) error {
-	var contentBytes []byte
-	var contentChanged bool
 	var err error
 	var fileExist bool
+	var skipWriteContent bool
 
 	fileExist = util.FileExist(item.FilePath)
 
@@ -113,25 +123,43 @@ func (fileAdapter *File) processFile(item returndata.File) error {
 		}
 	}
 
-	if item.FileContent != "" { //@todo if user want to truncate file?
-		contentBytes, _ = ioutil.ReadFile(item.FilePath)
-		if fileExist == true && item.FileContent != string(contentBytes) {
-			contentChanged = true
-		}
-
-		if fileExist == false || contentChanged == true {
-			err = ioutil.WriteFile(item.FilePath, []byte(item.FileContent), 0644)
-			if err != nil {
-				util.Logger.Error("Failed to write content to: ", item.FilePath)
-				return err
-			} else {
-				util.Logger.Info("Content written to: ", item.FilePath)
-			}
+	//write content
+	if fileExist == true {
+		if item.FileContent == "" { //content is empty, check if NoTruncate is true
+			skipWriteContent = item.NoTruncate
+		} // else, content not empty, ignore NoTruncate, skipWriteContent = false
+	} else {
+		skipWriteContent = item.FileContent == ""
+	}
+	if skipWriteContent == false {
+		err = fileAdapter.writeContent(item)
+		if err != nil {
+			return err
 		}
 	}
 
-	err = fileAdapter.changeMode(item)
-	err = fileAdapter.changeOwnerAndGroup(item)
+	//change permission
+	if item.Mode != "" {
+		err = fileAdapter.changeMode(item)
+		if err != nil {
+			return err
+		}
+	}
+
+	//change user and group
+	if item.User != "" {
+		err = fileAdapter.changeGroup(item)
+		if err != nil {
+			return err
+		}
+	}
+	if item.UserGroup != "" {
+		err = fileAdapter.changeOwner(item)
+		if err != nil {
+			return err
+		}
+	}
+
 	return nil
 }
 
@@ -165,11 +193,52 @@ func (fileAdapter *File) processLink(item returndata.File) error {
 }
 
 func (fileAdapter *File) changeMode(item returndata.File) error {
-	//chmod
+	var err error
+	var modeInt int64
+	var mode os.FileMode
+	var stat os.FileInfo
+	modeInt, err = strconv.ParseInt(item.Mode, 8, 32)
+	if err != nil {
+		util.Logger.Error("Invalid file mode: ", item.Mode, item.FilePath)
+		return err
+	}
+
+	mode = os.FileMode(modeInt)
+	stat, _ = os.Lstat(item.FilePath)
+	if stat.Mode().Perm() != mode {
+		err = os.Chmod(item.FilePath, mode)
+		if err != nil {
+			util.Logger.Error("Failed to change mode: ", item.FilePath)
+			return err
+		} else {
+			util.Logger.Info("File mode changed to : ", item.Mode, item.FilePath)
+		}
+	}
 	return nil
 }
 
-func (fileAdapter *File) changeOwnerAndGroup(item returndata.File) error {
-	//chown -h user:group
+func (fileAdapter *File) changeGroup(item returndata.File) error {
+
+	return nil
+}
+
+func (fileAdapter *File) changeOwner(item returndata.File) error {
+
+	return nil
+}
+
+func (fileAdapter *File) writeContent(item returndata.File) error {
+	var contentBytes []byte
+	var err error
+	contentBytes, _ = ioutil.ReadFile(item.FilePath)
+	if item.FileContent != string(contentBytes) {
+		err = ioutil.WriteFile(item.FilePath, []byte(item.FileContent), 0644)
+		if err != nil {
+			util.Logger.Error("Failed to write content to: ", item.FilePath)
+			return err
+		} else {
+			util.Logger.Info("Content written to: ", item.FilePath)
+		}
+	}
 	return nil
 }

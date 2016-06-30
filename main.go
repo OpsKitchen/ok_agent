@@ -5,8 +5,8 @@ import (
 	"flag"
 
 	//local pkg
-	"github.com/Sirupsen/logrus"
 	"github.com/OpsKitchen/ok_agent/util"
+	"github.com/Sirupsen/logrus"
 )
 
 func main() {
@@ -19,11 +19,12 @@ func main() {
 	debugMode = flag.Bool("d", false, "enable debug log")
 	flag.Parse()
 
-	//create debug logger
+	//enable debug log
 	if *debugMode {
 		util.Logger.Level = logrus.DebugLevel
 	}
 
+	//dispatch
 	dispatcher = &Dispatcher{
 		BaseConfigFile: *baseConfigFile,
 	}
