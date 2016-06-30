@@ -6,13 +6,15 @@ import (
 	"io/ioutil"
 
 	//local pkg
-	"github.com/OpsKitchen/ok_agent/adapter"
 	"github.com/OpsKitchen/ok_agent/model/api"
 	"github.com/OpsKitchen/ok_agent/model/api/returndata"
 	"github.com/OpsKitchen/ok_agent/model/config"
 	"github.com/OpsKitchen/ok_agent/util"
 	"github.com/OpsKitchen/ok_api_sdk_go/sdk"
 	"github.com/OpsKitchen/ok_api_sdk_go/sdk/model"
+	"reflect"
+	//"github.com/OpsKitchen/ok_agent/adapter"
+	"github.com/OpsKitchen/ok_agent/adapter"
 )
 
 type Dispatcher struct {
@@ -123,38 +125,47 @@ func (dispatcher *Dispatcher) processDynamicApi() {
 	var dynamicApi returndata.DynamicApi
 	for _, dynamicApi = range dispatcher.DynamicApiList {
 		util.Logger.Info("Now processing: ", dynamicApi.Name)
-		var adp adapter.AdapterInterface
 		var apiResult *model.ApiResult
+		var apiResultDataKind reflect.Kind
 		var err error
 
-		switch dynamicApi.ReturnDataType {
-		case returndata.AugeasList:
-			adp = &adapter.Augeas{}
-
-		case returndata.CommandList:
-			adp = &adapter.Command{}
-
-		case returndata.FileList:
-			adp = &adapter.File{}
-		}
-
+		//call dynamic api
 		apiResult, err = dispatcher.ApiClient.CallApi(dynamicApi.Name, dynamicApi.Version, dispatcher.ApiParam, nil)
-
 		if err != nil {
 			util.Logger.Fatal("Call api failed: ", dynamicApi.Name, dynamicApi.Version)
 		}
 		if apiResult.Success == false {
 			util.Logger.Fatal("Api return error: ", apiResult.ErrorCode, apiResult.ErrorMessage)
 		}
+		if apiResult.Data == nil {
+			continue
+		}
 
-		err = adp.CastItemList(apiResult.Data)
-		if err != nil {
-			util.Logger.Fatal("Cast return data type failed: ", err.Error())
-		} else {
-			err = adp.Process()
-			if err != nil {
-				util.Logger.Fatal(err.Error())
+		//cast item list to native go type
+		apiResultDataKind = reflect.TypeOf(apiResult.Data).Kind()
+		if apiResultDataKind != reflect.Slice {
+			util.Logger.Fatal("Wrong return data type, expected list, got: ", reflect.TypeOf(apiResult.Data))
+		}
+
+		switch dynamicApi.ReturnDataType {
+		case returndata.AugeasList:
+			continue
+
+		case returndata.CommandList:
+			continue
+
+		case returndata.FileList:
+			var item adapter.File
+			var itemList []adapter.File = []adapter.File{}
+			err = util.JsonConvert(apiResult.Data, &itemList)
+			for _, item = range itemList{
+				err = item.Process()
+				if err != nil {
+					util.Logger.Error(err.Error())
+				}
 			}
+		default:
+			util.Logger.Fatal("Unsupported list: ", dynamicApi.ReturnDataType)
 		}
 	}
 }

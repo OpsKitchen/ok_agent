@@ -2,7 +2,6 @@ package adapter
 
 import (
 	//go builtin pkg
-	"encoding/json"
 	"errors"
 	"io/ioutil"
 	"os"
@@ -10,33 +9,21 @@ import (
 	"strconv"
 
 	//local pkg
-	"github.com/OpsKitchen/ok_agent/model/api/returndata"
 	"github.com/OpsKitchen/ok_agent/util"
 )
 
 type File struct {
-	itemList []returndata.File
+	FilePath    string
+	User        string
+	UserGroup   string
+	Mode        string
+	FileType    string
+	FileContent string
+	NoTruncate  bool
+	Target      string
 }
 
-func (fileAdapter *File) CastItemList(list interface{}) error {
-	var dataByte []byte
-	dataByte, _ = json.Marshal(list)
-	return json.Unmarshal(dataByte, &fileAdapter.itemList)
-}
-
-func (fileAdapter *File) Process() error {
-	var err error
-	var item returndata.File
-	for _, item = range fileAdapter.itemList {
-		err = fileAdapter.processItem(item)
-		if err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-func (fileAdapter *File) processItem(item returndata.File) error {
+func (item *File) Process() error {
 	var err error
 	var parentDir string
 
@@ -67,16 +54,16 @@ func (fileAdapter *File) processItem(item returndata.File) error {
 
 	switch item.FileType {
 	case "file":
-		return fileAdapter.processFile(item)
+		return item.processFile()
 	case "dir":
-		return fileAdapter.processDir(item)
+		return item.processDir()
 	case "link":
-		return fileAdapter.processLink(item)
+		return item.processLink()
 	}
 	return nil
 }
 
-func (fileAdapter *File) processDir(item returndata.File) error {
+func (item *File) processDir() error {
 	var err error
 	//create dir
 	if util.FileExist(item.FilePath) == false {
@@ -89,15 +76,15 @@ func (fileAdapter *File) processDir(item returndata.File) error {
 		}
 	}
 
-	err = fileAdapter.changeMode(item)
+	err = item.changeMode()
 	if err != nil {
 		return err
 	}
-	err = fileAdapter.changeGroup(item)
+	err = item.changeGroup()
 	if err != nil {
 		return err
 	}
-	err = fileAdapter.changeOwner(item)
+	err = item.changeOwner()
 	if err != nil {
 		return err
 	}
@@ -105,7 +92,7 @@ func (fileAdapter *File) processDir(item returndata.File) error {
 	return nil
 }
 
-func (fileAdapter *File) processFile(item returndata.File) error {
+func (item *File) processFile() error {
 	var err error
 	var fileExist bool
 	var skipWriteContent bool
@@ -132,7 +119,7 @@ func (fileAdapter *File) processFile(item returndata.File) error {
 		skipWriteContent = item.FileContent == ""
 	}
 	if skipWriteContent == false {
-		err = fileAdapter.writeContent(item)
+		err = item.writeContent()
 		if err != nil {
 			return err
 		}
@@ -140,7 +127,7 @@ func (fileAdapter *File) processFile(item returndata.File) error {
 
 	//change permission
 	if item.Mode != "" {
-		err = fileAdapter.changeMode(item)
+		err = item.changeMode()
 		if err != nil {
 			return err
 		}
@@ -148,13 +135,13 @@ func (fileAdapter *File) processFile(item returndata.File) error {
 
 	//change user and group
 	if item.User != "" {
-		err = fileAdapter.changeGroup(item)
+		err = item.changeGroup()
 		if err != nil {
 			return err
 		}
 	}
 	if item.UserGroup != "" {
-		err = fileAdapter.changeOwner(item)
+		err = item.changeOwner()
 		if err != nil {
 			return err
 		}
@@ -163,7 +150,7 @@ func (fileAdapter *File) processFile(item returndata.File) error {
 	return nil
 }
 
-func (fileAdapter *File) processLink(item returndata.File) error {
+func (item *File) processLink() error {
 	var err error
 	if item.Target == "" {
 		util.Logger.Error("Link target is empty")
@@ -192,7 +179,7 @@ func (fileAdapter *File) processLink(item returndata.File) error {
 	return nil
 }
 
-func (fileAdapter *File) changeMode(item returndata.File) error {
+func (item *File) changeMode() error {
 	var err error
 	var modeInt int64
 	var mode os.FileMode
@@ -217,17 +204,17 @@ func (fileAdapter *File) changeMode(item returndata.File) error {
 	return nil
 }
 
-func (fileAdapter *File) changeGroup(item returndata.File) error {
+func (item *File) changeGroup() error {
 
 	return nil
 }
 
-func (fileAdapter *File) changeOwner(item returndata.File) error {
+func (item *File) changeOwner() error {
 
 	return nil
 }
 
-func (fileAdapter *File) writeContent(item returndata.File) error {
+func (item *File) writeContent() error {
 	var contentBytes []byte
 	var err error
 	contentBytes, _ = ioutil.ReadFile(item.FilePath)
