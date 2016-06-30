@@ -124,7 +124,7 @@ func (dispatcher *Dispatcher) prepareDynamicApiList() {
 func (dispatcher *Dispatcher) processDynamicApi() {
 	var dynamicApi returndata.DynamicApi
 	for _, dynamicApi = range dispatcher.DynamicApiList {
-		util.Logger.Info("Now processing: ", dynamicApi.Name)
+		util.Logger.Debug("Calling dynamic api: ", dynamicApi.Name)
 		var apiResult *model.ApiResult
 		var apiResultDataKind reflect.Kind
 		var err error
@@ -152,7 +152,15 @@ func (dispatcher *Dispatcher) processDynamicApi() {
 			continue
 
 		case returndata.CommandList:
-			continue
+			var item adapter.Command
+			var itemList []adapter.Command = []adapter.Command{}
+			err = util.JsonConvert(apiResult.Data, &itemList)
+			for _, item = range itemList{
+				err = item.Process()
+				if err != nil {
+					util.Logger.Error(err.Error())
+				}
+			}
 
 		case returndata.FileList:
 			var item adapter.File

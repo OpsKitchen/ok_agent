@@ -41,7 +41,7 @@ func (item *File) Process() error {
 		return errors.New("File type is empty")
 	}
 
-	util.Logger.Info("Now processing file (dir/link): ", item.FilePath)
+	util.Logger.Debug("Processing file: ", item.FilePath)
 
 	//create parent dir
 	parentDir = filepath.Dir(item.FilePath)
