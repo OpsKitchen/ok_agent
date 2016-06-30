@@ -10,12 +10,13 @@ import (
 
 	//local pkg
 	"github.com/OpsKitchen/ok_agent/util"
+	"os/user"
 )
 
 type File struct {
 	FilePath    string
 	User        string
-	UserGroup   string
+	Group       string
 	Mode        string
 	FileType    string
 	FileContent string
@@ -39,6 +40,8 @@ func (item *File) Process() error {
 		util.Logger.Error("File type is empty")
 		return errors.New("File type is empty")
 	}
+
+	util.Logger.Info("Now processing file (dir/link): ", item.FilePath)
 
 	//create parent dir
 	parentDir = filepath.Dir(item.FilePath)
@@ -80,11 +83,7 @@ func (item *File) processDir() error {
 	if err != nil {
 		return err
 	}
-	err = item.changeGroup()
-	if err != nil {
-		return err
-	}
-	err = item.changeOwner()
+	err = item.changeOwnerAndGroup()
 	if err != nil {
 		return err
 	}
@@ -134,14 +133,8 @@ func (item *File) processFile() error {
 	}
 
 	//change user and group
-	if item.User != "" {
-		err = item.changeGroup()
-		if err != nil {
-			return err
-		}
-	}
-	if item.UserGroup != "" {
-		err = item.changeOwner()
+	if item.User != "" && item.Group != "" {
+		err = item.changeOwnerAndGroup()
 		if err != nil {
 			return err
 		}
@@ -186,7 +179,7 @@ func (item *File) changeMode() error {
 	var stat os.FileInfo
 	modeInt, err = strconv.ParseInt(item.Mode, 8, 32)
 	if err != nil {
-		util.Logger.Error("Invalid file mode: ", item.Mode, item.FilePath)
+		util.Logger.Error("Invalid file mode: ", item.Mode)
 		return err
 	}
 
@@ -198,20 +191,40 @@ func (item *File) changeMode() error {
 			util.Logger.Error("Failed to change mode: ", item.FilePath)
 			return err
 		} else {
-			util.Logger.Info("File mode changed to : ", item.Mode, item.FilePath)
+			util.Logger.Info("File mode changed to : ", item.Mode, " ", item.FilePath)
 		}
 	}
 	return nil
 }
 
-func (item *File) changeGroup() error {
+func (item *File) changeOwnerAndGroup() error {
+	var err error
+	var gid, uid int64
+	var groupObj *user.Group
+	var userObj *user.User
 
-	return nil
-}
+	groupObj, err = user.LookupGroup(item.Group)
+	if err != nil {
+		util.Logger.Error("Group does not exist: ", item.Group)
+		return err
+	}
 
-func (item *File) changeOwner() error {
+	userObj, err = user.Lookup(item.User)
+	if err != nil {
+		util.Logger.Error("User does not exist: ", item.User)
+		return err
+	}
+	gid, _ = strconv.ParseInt(groupObj.Gid, 10, 32)
+	uid, _ = strconv.ParseInt(userObj.Uid, 10, 32)
 
-	return nil
+	err = os.Chown(item.FilePath, int(uid), int(gid))
+	if err != nil {
+		util.Logger.Error("Failed to change owner/group to: ", item.User, "/", item.Group)
+		return err
+	} else {
+		util.Logger.Info("Owner/group changed to: ", item.User, "/", item.Group)
+		return nil
+	}
 }
 
 func (item *File) writeContent() error {
