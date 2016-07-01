@@ -94,7 +94,8 @@ func (dispatcher *Dispatcher) prepareApiClient() {
 
 func (dispatcher *Dispatcher) prepareApiParam() {
 	dispatcher.ApiParam = &api.RequestParam{}
-	dispatcher.ApiParam.ServerUniqueName = dispatcher.Credential.ServerUniqueName
+	dispatcher.ApiParam.SetServerUniqueName(dispatcher.Credential.ServerUniqueName).SetInstanceId(
+		dispatcher.Credential.InstanceId)
 }
 
 func (dispatcher *Dispatcher) prepareDynamicApiList() {
