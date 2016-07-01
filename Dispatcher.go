@@ -10,8 +10,8 @@ import (
 	"github.com/OpsKitchen/ok_api_sdk_go/sdk"
 	"github.com/OpsKitchen/ok_api_sdk_go/sdk/model"
 	"io/ioutil"
-	"reflect"
 	"os"
+	"reflect"
 )
 
 type Dispatcher struct {
@@ -156,7 +156,7 @@ func (dispatcher *Dispatcher) processDynamicApi() {
 			for _, item = range itemList {
 				err = item.Process()
 				if err != nil {
-					errorCount ++
+					errorCount++
 					if DebugMode == true {
 						os.Exit(1)
 					}
@@ -170,7 +170,7 @@ func (dispatcher *Dispatcher) processDynamicApi() {
 			for _, item = range itemList {
 				err = item.Process()
 				if err != nil {
-					errorCount ++
+					errorCount++
 					if DebugMode == true {
 						os.Exit(1)
 					}
@@ -178,8 +178,8 @@ func (dispatcher *Dispatcher) processDynamicApi() {
 			}
 		default:
 			util.Logger.Fatal("Unsupported list: ", dynamicApi.ReturnDataType)
-		}//end switch
-	}//end for
+		} //end switch
+	} //end for
 
 	if errorCount > 0 {
 		util.Logger.Fatal(errorCount, " error(s) occourred, run me with '-d' option to see more detail")
