@@ -9,6 +9,7 @@ import (
 	"os/user"
 	"path/filepath"
 	"strconv"
+	"syscall"
 )
 
 type File struct {
@@ -37,7 +38,7 @@ func (item *File) Process() error {
 	}
 
 	//check path exist
-	err = item.checkFilePathFormat()
+	err = item.checkFilePath()
 	if err != nil {
 		return err
 	}
@@ -195,6 +196,9 @@ func (item *File) changeOwnerAndGroup() error {
 	var gid, uid int64
 	var groupObj *user.Group
 	var userObj *user.User
+	var convertedOk bool
+	var stat os.FileInfo
+	var stat_t *syscall.Stat_t
 
 	groupObj, err = user.LookupGroup(item.Group)
 	if err != nil {
@@ -210,6 +214,17 @@ func (item *File) changeOwnerAndGroup() error {
 	gid, _ = strconv.ParseInt(groupObj.Gid, 10, 32)
 	uid, _ = strconv.ParseInt(userObj.Uid, 10, 32)
 
+	stat, err = os.Stat(item.FilePath)
+	if err == nil {
+		stat_t, convertedOk = stat.Sys().(*syscall.Stat_t)
+		if convertedOk {
+			//user and group is already right, no need to change
+			if gid == int64(stat_t.Gid) && uid == int64(stat_t.Uid) {
+				return nil
+			}
+		}
+	}
+
 	err = os.Chown(item.FilePath, int(uid), int(gid))
 	if err != nil {
 		util.Logger.Error("Failed to change owner/group to: ", item.User, "/", item.Group)
@@ -219,7 +234,7 @@ func (item *File) changeOwnerAndGroup() error {
 	return nil
 }
 
-func (item *File) checkFilePathFormat() error {
+func (item *File) checkFilePath() error {
 	var err error
 	var errMsg string
 	var stat os.FileInfo
