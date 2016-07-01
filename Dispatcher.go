@@ -11,6 +11,7 @@ import (
 	"github.com/OpsKitchen/ok_api_sdk_go/sdk/model"
 	"io/ioutil"
 	"reflect"
+	"os"
 )
 
 type Dispatcher struct {
@@ -106,19 +107,17 @@ func (dispatcher *Dispatcher) prepareDynamicApiList() {
 	if err != nil {
 		util.Logger.Fatal("Call entrance api failed", err.Error())
 	}
-
 	if apiResult.Success == false {
 		util.Logger.Fatal("Entrance api return error: ", apiResult.ErrorCode, apiResult.ErrorMessage)
 	}
-
 	if len(dispatcher.DynamicApiList) == 0 {
 		util.Logger.Fatal("Entrance api return empty api list")
 	}
-	util.Logger.Debug(dispatcher.DynamicApiList)
 }
 
 func (dispatcher *Dispatcher) processDynamicApi() {
 	var dynamicApi returndata.DynamicApi
+	var errorCount int
 	for _, dynamicApi = range dispatcher.DynamicApiList {
 		util.Logger.Debug("Calling dynamic api: ", dynamicApi.Name)
 		var apiResult *model.ApiResult
@@ -133,6 +132,8 @@ func (dispatcher *Dispatcher) processDynamicApi() {
 		if apiResult.Success == false {
 			util.Logger.Fatal("Api return error: ", apiResult.ErrorCode, apiResult.ErrorMessage)
 		}
+
+		//server return empty data, nothing to do, go to the next api
 		if apiResult.Data == nil {
 			continue
 		}
@@ -154,7 +155,10 @@ func (dispatcher *Dispatcher) processDynamicApi() {
 			for _, item = range itemList {
 				err = item.Process()
 				if err != nil {
-					util.Logger.Error(err.Error())
+					errorCount ++
+					if DebugMode == true {
+						os.Exit(1)
+					}
 				}
 			}
 
@@ -165,11 +169,20 @@ func (dispatcher *Dispatcher) processDynamicApi() {
 			for _, item = range itemList {
 				err = item.Process()
 				if err != nil {
-					util.Logger.Error(err.Error())
+					errorCount ++
+					if DebugMode == true {
+						os.Exit(1)
+					}
 				}
 			}
 		default:
 			util.Logger.Fatal("Unsupported list: ", dynamicApi.ReturnDataType)
-		}
+		}//end switch
+	}//end for
+
+	if errorCount > 0 {
+		util.Logger.Fatal(errorCount, " error(s) occourred, run me with '-d' option to see more detail")
+	} else {
+		util.Logger.Info("Congratulations! All tasks have been done successfully!")
 	}
 }

@@ -26,8 +26,6 @@ func (item *Command) Process() error {
 		return errors.New("Command is empty")
 	}
 
-	util.Logger.Debug("Processing command: ", item.Command)
-
 	//check cwd
 	if item.Cwd != "" {
 		stat, err = os.Stat(item.Cwd)
@@ -39,6 +37,7 @@ func (item *Command) Process() error {
 			return errors.New("Cwd is not a directory: " + item.Cwd)
 		}
 	}
+	util.Logger.Debug("Processing command: ", item.Command)
 
 	//check if necessary to run command
 	if item.RunIf != "" && item.fastRun(item.RunIf) == false {
@@ -49,7 +48,7 @@ func (item *Command) Process() error {
 	}
 
 	//run command
-	return item.runWithOutput()
+	return item.runWithMessage()
 }
 
 func (item *Command) fastRun(command string) bool {
@@ -61,7 +60,7 @@ func (item *Command) fastRun(command string) bool {
 	return err == nil
 }
 
-func (item *Command) runWithOutput() error {
+func (item *Command) runWithMessage() error {
 	var cmd *exec.Cmd
 	var err error
 	var errPipe, outPipe io.ReadCloser
@@ -100,7 +99,7 @@ func (item *Command) runWithOutput() error {
 		if err != nil || io.EOF == err {
 			break
 		}
-		util.Logger.Error(line)
+		util.Logger.Debug(line)
 	}
 	err = cmd.Wait()
 	if err != nil {
