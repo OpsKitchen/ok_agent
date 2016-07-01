@@ -23,19 +23,23 @@ type File struct {
 
 func (item *File) Process() error {
 	var err error
+	var errMsg string
 	var parentDir string
 
 	if item.FilePath == "" {
-		util.Logger.Error("File path is empty")
-		return errors.New("File path is empty")
+		errMsg = "File path is empty"
+		util.Logger.Error(errMsg)
+		return errors.New(errMsg)
 	}
 	if item.FilePath == "/" {
-		util.Logger.Error("File path is root")
-		return errors.New("File path is root")
+		errMsg = "File path is root"
+		util.Logger.Error(errMsg)
+		return errors.New(errMsg)
 	}
 	if item.FileType == "" {
-		util.Logger.Error("File type is empty")
-		return errors.New("File type is empty")
+		errMsg = "File type is empty"
+		util.Logger.Error(errMsg)
+		return errors.New(errMsg)
 	}
 
 	util.Logger.Debug("Processing file: ", item.FilePath)
@@ -59,6 +63,10 @@ func (item *File) Process() error {
 		return item.processDir()
 	case "link":
 		return item.processLink()
+	default:
+		errMsg = "Unsupported file type: " + item.FileType
+		util.Logger.Error(errMsg)
+		return errors.New(errMsg)
 	}
 	return nil
 }
