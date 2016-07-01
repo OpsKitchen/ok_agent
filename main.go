@@ -1,10 +1,7 @@
 package main
 
 import (
-	//go builtin pkg
 	"flag"
-
-	//local pkg
 	"github.com/OpsKitchen/ok_agent/util"
 	"github.com/Sirupsen/logrus"
 )

@@ -1,20 +1,16 @@
 package main
 
 import (
-	//go builtin pkg
 	"encoding/json"
-	"io/ioutil"
-
-	//local pkg
+	"github.com/OpsKitchen/ok_agent/adapter"
 	"github.com/OpsKitchen/ok_agent/model/api"
 	"github.com/OpsKitchen/ok_agent/model/api/returndata"
 	"github.com/OpsKitchen/ok_agent/model/config"
 	"github.com/OpsKitchen/ok_agent/util"
 	"github.com/OpsKitchen/ok_api_sdk_go/sdk"
 	"github.com/OpsKitchen/ok_api_sdk_go/sdk/model"
+	"io/ioutil"
 	"reflect"
-	//"github.com/OpsKitchen/ok_agent/adapter"
-	"github.com/OpsKitchen/ok_agent/adapter"
 )
 
 type Dispatcher struct {
@@ -155,7 +151,7 @@ func (dispatcher *Dispatcher) processDynamicApi() {
 			var item adapter.Command
 			var itemList []adapter.Command = []adapter.Command{}
 			err = util.JsonConvert(apiResult.Data, &itemList)
-			for _, item = range itemList{
+			for _, item = range itemList {
 				err = item.Process()
 				if err != nil {
 					util.Logger.Error(err.Error())
@@ -166,7 +162,7 @@ func (dispatcher *Dispatcher) processDynamicApi() {
 			var item adapter.File
 			var itemList []adapter.File = []adapter.File{}
 			err = util.JsonConvert(apiResult.Data, &itemList)
-			for _, item = range itemList{
+			for _, item = range itemList {
 				err = item.Process()
 				if err != nil {
 					util.Logger.Error(err.Error())

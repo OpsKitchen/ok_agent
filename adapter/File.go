@@ -1,16 +1,13 @@
 package adapter
 
 import (
-	//go builtin pkg
 	"errors"
+	"github.com/OpsKitchen/ok_agent/util"
 	"io/ioutil"
 	"os"
+	"os/user"
 	"path/filepath"
 	"strconv"
-
-	//local pkg
-	"github.com/OpsKitchen/ok_agent/util"
-	"os/user"
 )
 
 type File struct {

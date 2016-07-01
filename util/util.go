@@ -1,9 +1,9 @@
 package util
 
 import (
+	"encoding/json"
 	"github.com/Sirupsen/logrus"
 	"os"
-	"encoding/json"
 )
 
 var Logger = logrus.New()
