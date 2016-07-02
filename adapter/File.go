@@ -154,6 +154,7 @@ func (item *File) parseItem() error {
 
 	return nil
 }
+
 //***** interface method area *****//
 
 func (item *File) processDir() error {
@@ -276,7 +277,7 @@ func (item *File) changeOwnership() error {
 			}
 		}
 
-		err = os.Chown(item.FilePath, int(item.gid), int(item.gid))
+		err = os.Lchown(item.FilePath, int(item.gid), int(item.gid))
 		if err != nil {
 			util.Logger.Error("Failed to change owner/group to: ", item.User, "/", item.Group)
 			return err
