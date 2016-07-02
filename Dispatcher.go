@@ -101,6 +101,7 @@ func (dispatcher *Dispatcher) prepareApiParam() {
 func (dispatcher *Dispatcher) prepareDynamicApiList() {
 	var apiResult *model.ApiResult
 	var err error
+	util.Logger.Debug("Calling entrance api", )
 
 	apiResult, err = dispatcher.ApiClient.CallApi(dispatcher.Config.EntranceApiName,
 		dispatcher.Config.EntranceApiVersion, dispatcher.ApiParam, &dispatcher.DynamicApiList)
@@ -133,9 +134,8 @@ func (dispatcher *Dispatcher) processDynamicApi() {
 		if apiResult.Success == false {
 			util.Logger.Fatal("Api return error: ", apiResult.ErrorCode, apiResult.ErrorMessage)
 		}
-
-		//server return empty data, nothing to do, go to the next api
 		if apiResult.Data == nil {
+			util.Logger.Debug("Api returns empty data, nothing to do, go to next api")
 			continue
 		}
 

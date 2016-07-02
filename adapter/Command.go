@@ -3,6 +3,7 @@ package adapter
 import (
 	"bufio"
 	"errors"
+	"github.com/OpsKitchen/ok_agent/adapter/command"
 	"github.com/OpsKitchen/ok_agent/util"
 	"io"
 	"os"
@@ -18,32 +19,30 @@ type Command struct {
 	NotRunIf string
 }
 
+//***** interface method area *****//
 func (item *Command) Process() error {
 	var err error
-	var stat os.FileInfo
-	if item.Command == "" {
-		util.Logger.Error("Command is empty")
-		return errors.New("Command is empty")
+	util.Logger.Debug("Processing command: ", item.Command)
+
+	//check item data
+	err = item.checkItem()
+	if err != nil {
+		return err
 	}
 
-	//check cwd
-	if item.Cwd != "" {
-		stat, err = os.Stat(item.Cwd)
-		if err != nil {
-			util.Logger.Error("Cwd does not exist: ", item.Cwd)
-			return errors.New("Cwd does not exist: " + item.Cwd)
-		} else if stat.IsDir() == false {
-			util.Logger.Error("Cwd is not a directory: ", item.Cwd)
-			return errors.New("Cwd is not a directory: " + item.Cwd)
-		}
+	//parse item field
+	err = item.parseItem()
+	if err != nil {
+		return err
 	}
-	util.Logger.Debug("Processing command: ", item.Command)
 
 	//check if necessary to run command
 	if item.RunIf != "" && item.fastRun(item.RunIf) == false {
+		util.Logger.Debug("'RunIf' retunrs false, skip running command")
 		return nil
 	}
 	if item.NotRunIf != "" && item.fastRun(item.NotRunIf) == true {
+		util.Logger.Debug("'NotRunIf' returns true, skip running command")
 		return nil
 	}
 
@@ -51,13 +50,50 @@ func (item *Command) Process() error {
 	return item.runWithMessage()
 }
 
-func (item *Command) fastRun(command string) bool {
+func (item *Command) checkItem() error {
+	var err error
+	var errMsg string
+	var stat os.FileInfo
+
+	//check command
+	if item.Command == "" {
+		errMsg = "Command is empty"
+		util.Logger.Error(errMsg)
+		return errors.New(errMsg)
+	}
+
+	//check cwd
+	if item.Cwd != "" {
+		stat, err = os.Stat(item.Cwd)
+		if err != nil {
+			errMsg = "Cwd does not exist: " + item.Cwd
+			util.Logger.Error(errMsg)
+			return errors.New(errMsg)
+		} else if stat.IsDir() == false {
+			errMsg = "Cwd is not a directory: " + item.Cwd
+			util.Logger.Error(errMsg)
+			return errors.New(errMsg)
+		}
+	}
+	return  nil
+}
+
+func (item *Command) parseItem() error {
+	return nil
+}
+//***** interface method area *****//
+
+func (item *Command) fastRun(line string) bool {
 	var cmd *exec.Cmd
 	var err error
-	cmd = exec.Command("/bin/sh", "-c", command)
+	cmd = exec.Command(command.DefaultShell, "-c", line)
 	item.setPath(cmd)
 	err = cmd.Run()
-	return err == nil
+	if err != nil {
+		util.Logger.Debug(err.Error())
+		return false
+	}
+	return true
 }
 
 func (item *Command) runWithMessage() error {
@@ -68,7 +104,7 @@ func (item *Command) runWithMessage() error {
 	var line string
 
 	//prepare cmd object
-	cmd = exec.Command("/bin/sh", "-c", item.Command)
+	cmd = exec.Command(command.DefaultShell, "-c", item.Command)
 	item.setCwd(cmd)
 	item.setPath(cmd)
 
@@ -85,7 +121,7 @@ func (item *Command) runWithMessage() error {
 	//real-time output of std out
 	outReader = bufio.NewReader(outPipe)
 	for {
-		line, err = outReader.ReadString('\n')
+		line, err = outReader.ReadString(command.ReadStringDelimiter)
 		if err != nil || io.EOF == err {
 			break
 		}
@@ -95,7 +131,7 @@ func (item *Command) runWithMessage() error {
 	//real-time output of std err
 	errReader = bufio.NewReader(errPipe)
 	for {
-		line, err = errReader.ReadString('\n')
+		line, err = errReader.ReadString(command.ReadStringDelimiter)
 		if err != nil || io.EOF == err {
 			break
 		}
@@ -118,8 +154,8 @@ func (item *Command) setCwd(cmd *exec.Cmd) {
 
 func (item *Command) setPath(cmd *exec.Cmd) {
 	if item.Path != "" {
-		cmd.Env = append(cmd.Env, "PATH="+item.Path)
+		cmd.Env = append(cmd.Env, command.EnvKeyPath+"="+item.Path)
 	} else {
-		cmd.Env = append(cmd.Env, "PATH="+os.Getenv("PATH"))
+		cmd.Env = append(cmd.Env, command.EnvKeyPath+"="+os.Getenv(command.EnvKeyPath))
 	}
 }
