@@ -101,7 +101,7 @@ func (dispatcher *Dispatcher) prepareApiParam() {
 func (dispatcher *Dispatcher) prepareDynamicApiList() {
 	var apiResult *model.ApiResult
 	var err error
-	util.Logger.Debug("Calling entrance api", )
+	util.Logger.Debug("Calling entrance api")
 
 	apiResult, err = dispatcher.ApiClient.CallApi(dispatcher.Config.EntranceApiName,
 		dispatcher.Config.EntranceApiVersion, dispatcher.ApiParam, &dispatcher.DynamicApiList)
@@ -147,7 +147,18 @@ func (dispatcher *Dispatcher) processDynamicApi() {
 
 		switch dynamicApi.ReturnDataType {
 		case returndata.AugeasList:
-			continue
+			var item adapter.Augeas
+			var itemList []adapter.Augeas = []adapter.Augeas{}
+			err = util.JsonConvert(apiResult.Data, &itemList)
+			for _, item = range itemList {
+				err = item.Process()
+				if err != nil {
+					errorCount++
+					if DebugMode == true {
+						os.Exit(1)
+					}
+				}
+			}
 
 		case returndata.CommandList:
 			var item adapter.Command

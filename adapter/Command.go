@@ -75,12 +75,13 @@ func (item *Command) checkItem() error {
 			return errors.New(errMsg)
 		}
 	}
-	return  nil
+	return nil
 }
 
 func (item *Command) parseItem() error {
 	return nil
 }
+
 //***** interface method area *****//
 
 func (item *Command) fastRun(line string) bool {
