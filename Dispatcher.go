@@ -51,6 +51,7 @@ func (dispatcher *Dispatcher) parseBaseConfig() {
 		util.Logger.Fatal("Base config file parse failed: ", err.Error())
 	}
 
+	util.Logger.Info("Runing opskitchen agent " + baseConfig.AgentVersion)
 	dispatcher.Config = baseConfig
 }
 
@@ -115,6 +116,7 @@ func (dispatcher *Dispatcher) prepareDynamicApiList() {
 	if len(dispatcher.DynamicApiList) == 0 {
 		util.Logger.Fatal("Entrance api return empty api list")
 	}
+	util.Logger.Info("Call entrance api successfully")
 }
 
 func (dispatcher *Dispatcher) processDynamicApi() {

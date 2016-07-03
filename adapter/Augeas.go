@@ -1,17 +1,17 @@
 package adapter
 
 import (
-	"github.com/OpsKitchen/ok_agent/util"
 	"errors"
 	agadapter "github.com/OpsKitchen/ok_agent/adapter/augeas"
+	"github.com/OpsKitchen/ok_agent/util"
 	agsdk "honnef.co/go/augeas"
 )
 
 type Augeas struct {
-	FilePath       string
-	Lens           string
-	OptionPath     string
-	OptionValue    string
+	FilePath    string
+	Lens        string
+	OptionPath  string
+	OptionValue string
 
 	//internal fields, not for json
 	fullOptionPath string

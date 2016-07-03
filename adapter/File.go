@@ -16,7 +16,7 @@ type File struct {
 	FilePath    string
 	User        string
 	Group       string
-	Mode        string
+	Permission  string
 	FileType    string
 	FileContent string
 	NoTruncate  bool
@@ -115,7 +115,7 @@ func (item *File) parseItem() error {
 	var userObj *user.User
 
 	//convert string permission to os.FileMode
-	if item.Mode == "" {
+	if item.Permission == "" {
 		switch item.FileType {
 		case file.FileTypeDir:
 			item.perm = os.FileMode(file.DefaultPermDir)
@@ -125,9 +125,9 @@ func (item *File) parseItem() error {
 			item.perm = os.FileMode(file.DefaultPermLink)
 		}
 	} else {
-		filePerm, err = strconv.ParseUint(item.Mode, 8, 32)
+		filePerm, err = strconv.ParseUint(item.Permission, 8, 32)
 		if err != nil {
-			util.Logger.Error("Invalid file mode: ", item.Mode)
+			util.Logger.Error("Invalid file mode: ", item.Permission)
 			return err
 		}
 		item.perm = os.FileMode(filePerm)
@@ -183,7 +183,7 @@ func (item *File) processDir() error {
 	if err != nil {
 		return err
 	}
-	
+
 	return nil
 }
 
@@ -291,7 +291,7 @@ func (item *File) changePermission() error {
 	var err error
 	var stat os.FileInfo
 
-	if item.Mode != "" {
+	if item.Permission != "" {
 		stat, err = os.Stat(item.FilePath)
 		if stat.Mode().Perm() == item.perm {
 			util.Logger.Debug("File permission was right, skip changing permission: ", item.FilePath)
@@ -302,7 +302,7 @@ func (item *File) changePermission() error {
 			util.Logger.Error("Failed to change permission: ", item.FilePath)
 			return err
 		}
-		util.Logger.Info("File permission changed to : ", item.Mode, " ", item.FilePath)
+		util.Logger.Info("File permission changed to : ", item.Permission, " ", item.FilePath)
 	}
 	return nil
 }
