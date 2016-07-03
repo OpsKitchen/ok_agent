@@ -39,11 +39,11 @@ func (item *Command) Process() error {
 
 	//check if necessary to run command
 	if item.RunIf != "" && item.fastRun(item.RunIf) == false {
-		util.Logger.Debug("'RunIf' retunrs false, skip running. 'RunIf' is: " + item.RunIf)
+		util.Logger.Debug("'RunIf' retunrs false, skip running command.")
 		return nil
 	}
 	if item.NotRunIf != "" && item.fastRun(item.NotRunIf) == true {
-		util.Logger.Debug("'NotRunIf' returns true, skip running.'NotRunIf' is: " + item.NotRunIf)
+		util.Logger.Debug("'NotRunIf' returns true, skip running command.")
 		return nil
 	}
 
@@ -103,11 +103,7 @@ func (item *Command) fastRun(line string) bool {
 	cmd = exec.Command(command.DefaultShell, item.User, "-c", line)
 	item.setPath(cmd)
 	err = cmd.Run()
-	if err != nil {
-		util.Logger.Debug("Error occourred when running: " + line + "\n" + err.Error())
-		return false
-	}
-	return true
+	return err == nil
 }
 
 func (item *Command) runWithMessage() error {
@@ -153,7 +149,7 @@ func (item *Command) runWithMessage() error {
 	}
 	err = cmd.Wait()
 	if err != nil {
-		util.Logger.Error("Failed to  run commnad.")
+		util.Logger.Error("Failed to run commnad.")
 		return err
 	} else {
 		util.Logger.Info("Succeed to run commnad.")
