@@ -22,7 +22,7 @@ type Augeas struct {
 //***** interface method area *****//
 func (item *Augeas) Process() error {
 	var err error
-	util.Logger.Debug("Processing Augeas: ", item.OptionPath, "@", item.FilePath)
+	util.Logger.Info("Processing Augeas: ", item.OptionPath, "@", item.FilePath)
 
 	//check item data
 	err = item.checkItem()

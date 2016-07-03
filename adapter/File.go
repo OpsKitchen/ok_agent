@@ -32,7 +32,7 @@ type File struct {
 func (item *File) Process() error {
 	var err error
 	var errMsg string
-	util.Logger.Debug("Processing file: ", item.FilePath)
+	util.Logger.Info("Processing file: ", item.FilePath)
 	//check file type
 	err = item.checkItem()
 	if err != nil {
