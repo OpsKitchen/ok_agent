@@ -2,6 +2,7 @@ package command
 
 const (
 	EnvKeyPath          = "PATH"
-	DefaultShell        = "/bin/sh"
+	DefaultShell        = "/sbin/runuser"
+	DefaultUser         = "root"
 	ReadStringDelimiter = '\n'
 )

@@ -8,6 +8,7 @@ import (
 	"io"
 	"os"
 	"os/exec"
+	"os/user"
 )
 
 type Command struct {
@@ -22,7 +23,7 @@ type Command struct {
 //***** interface method area *****//
 func (item *Command) Process() error {
 	var err error
-	util.Logger.Debug("Processing command: ", item.Command)
+	util.Logger.Info("Processing command: ", item.Command)
 
 	//check item data
 	err = item.checkItem()
@@ -75,10 +76,22 @@ func (item *Command) checkItem() error {
 			return errors.New(errMsg)
 		}
 	}
+
+	//check user
+	if item.User != "" {
+		_, err = user.Lookup(item.User)
+		if err != nil {
+			util.Logger.Error("User does not exist: ", item.User)
+			return err
+		}
+	}
 	return nil
 }
 
 func (item *Command) parseItem() error {
+	if item.User == "" {
+		item.User = command.DefaultUser
+	}
 	return nil
 }
 
@@ -87,7 +100,7 @@ func (item *Command) parseItem() error {
 func (item *Command) fastRun(line string) bool {
 	var cmd *exec.Cmd
 	var err error
-	cmd = exec.Command(command.DefaultShell, "-c", line)
+	cmd = exec.Command(command.DefaultShell, item.User, "-c", line)
 	item.setPath(cmd)
 	err = cmd.Run()
 	if err != nil {
@@ -105,7 +118,7 @@ func (item *Command) runWithMessage() error {
 	var line string
 
 	//prepare cmd object
-	cmd = exec.Command(command.DefaultShell, "-c", item.Command)
+	cmd = exec.Command(command.DefaultShell, item.User, "-c", item.Command)
 	item.setCwd(cmd)
 	item.setPath(cmd)
 
