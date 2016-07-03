@@ -8,20 +8,21 @@ import (
 )
 
 type Augeas struct {
-	FilePath    string
-	Lens        string
-	OptionPath  string
-	OptionValue string
+	FilePath       string
+	Lens           string
+	OptionPath     string
+	OptionValue    string
 
 	//internal fields, not for json
-	incl        string
-	lensFile    string
+	fullOptionPath string
+	incl           string
+	lensFile       string
 }
 
 //***** interface method area *****//
 func (item *Augeas) Process() error {
 	var err error
-	util.Logger.Debug("Processing Augeas: ", item.OptionPath)
+	util.Logger.Debug("Processing Augeas: ", item.OptionPath, "@", item.FilePath)
 
 	//check item data
 	err = item.checkItem()
@@ -79,7 +80,8 @@ func (item *Augeas) checkItem() error {
 }
 
 func (item *Augeas) parseItem() error {
-	item.incl = agadapter.ContextRoot + item.FilePath + "/"
+	item.fullOptionPath = agadapter.ContextRoot + item.FilePath + "/" + item.OptionPath
+	item.incl = agadapter.ContextRoot + item.FilePath
 	item.lensFile = item.Lens + agadapter.LensSuffix
 	return nil
 }
@@ -87,34 +89,54 @@ func (item *Augeas) parseItem() error {
 //***** interface method area *****//
 
 func (item *Augeas) saveAugeas() error {
-	ag, err := agsdk.New("/", "", agsdk.NoLoad)
+	var ag agsdk.Augeas
+	var err error
+	var oldOptionValue string
+	//new augeas
+	ag, err = agsdk.New("/", "", agsdk.NoLoad)
 	if err != nil {
 		util.Logger.Error("Failed to initialize augeas sdk error: ", err.Error())
 		return err
 	}
-	
-	err = ag.Set(agadapter.LoadPath+item.Lens+agadapter.Lens, item.lensFile)
+
+	//set /augeas/load/lens and /augeas/load/incl
+	err = ag.Set(agadapter.LoadPath+item.Lens+agadapter.LoadPathLens, item.lensFile)
 	if err != nil {
 		util.Logger.Error("Failed to set lens: ", err.Error())
 		return err
 	}
-	err = ag.Set(agadapter.LoadPath+item.Lens+agadapter.Incl, item.FilePath)
+	err = ag.Set(agadapter.LoadPath+item.Lens+agadapter.LoadPathIncl, item.FilePath)
 	if err != nil {
 		util.Logger.Error("Failed to set incl: ", err.Error())
 		return err
 	}
+	err = ag.Load()
+	if err != nil {
+		util.Logger.Error("Failed to load lens: ", err.Error())
+		return err
+	}
 
-	err = ag.Set(item.incl+item.OptionPath, item.OptionValue)
+	//read option value
+	oldOptionValue, err = ag.Get(item.fullOptionPath)
+	if err == nil && oldOptionValue == item.OptionValue {
+		util.Logger.Debug("Config option with correct value already exists, skip setting")
+		return nil
+	}
+
+	//set option value
+	err = ag.Set(item.fullOptionPath, item.OptionValue)
 	if err != nil {
 		util.Logger.Error("Failed to set option path and value: ", err.Error())
 		return err
 	}
 
+	//save to disk
 	err = ag.Save()
+	ag.Close()
 	if err != nil {
 		util.Logger.Error("Failed to save augeas config option: ", err.Error())
 		return err
 	}
-	ag.Close()
+	util.Logger.Info(item.OptionPath + "@" + item.FilePath + " has been set to '" + item.OptionValue + "'")
 	return nil
 }
