@@ -48,7 +48,7 @@ func (dispatcher *Dispatcher) parseBaseConfig() {
 
 	err = json.Unmarshal(jsonBytes, &baseConfig)
 	if err != nil {
-		util.Logger.Fatal("Base config file parse failed: ", err.Error())
+		util.Logger.Fatal("Base config file is not a valid json file: " + dispatcher.BaseConfigFile)
 	}
 
 	util.Logger.Info("Runing opskitchen agent " + baseConfig.AgentVersion)
@@ -71,7 +71,7 @@ func (dispatcher *Dispatcher) parseCredentialConfig() {
 
 	err = json.Unmarshal(jsonBytes, &credentialConfig)
 	if err != nil {
-		util.Logger.Fatal("Credential config file parse failed: ", err.Error())
+		util.Logger.Fatal("Credential config file is not a valid json file: " + dispatcher.Config.CredentialFile)
 	}
 
 	dispatcher.Credential = credentialConfig
@@ -108,10 +108,10 @@ func (dispatcher *Dispatcher) prepareDynamicApiList() {
 		dispatcher.Config.EntranceApiVersion, dispatcher.ApiParam, &dispatcher.DynamicApiList)
 
 	if err != nil {
-		util.Logger.Fatal("Call entrance api failed", err.Error())
+		util.Logger.Fatal("Call entrance api failed")
 	}
 	if apiResult.Success == false {
-		util.Logger.Fatal("Entrance api return error: ", apiResult.ErrorCode, apiResult.ErrorMessage)
+		util.Logger.Fatal("Entrance api return error: " + apiResult.ErrorCode + "\t" + apiResult.ErrorMessage)
 	}
 	if len(dispatcher.DynamicApiList) == 0 {
 		util.Logger.Fatal("Entrance api return empty api list")

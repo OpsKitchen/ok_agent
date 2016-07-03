@@ -39,11 +39,11 @@ func (item *Command) Process() error {
 
 	//check if necessary to run command
 	if item.RunIf != "" && item.fastRun(item.RunIf) == false {
-		util.Logger.Debug("'RunIf' retunrs false, skip running command")
+		util.Logger.Debug("'RunIf' retunrs false, skip running. 'RunIf' is: " + item.RunIf)
 		return nil
 	}
 	if item.NotRunIf != "" && item.fastRun(item.NotRunIf) == true {
-		util.Logger.Debug("'NotRunIf' returns true, skip running command")
+		util.Logger.Debug("'NotRunIf' returns true, skip running.'NotRunIf' is: " + item.NotRunIf)
 		return nil
 	}
 
@@ -81,7 +81,7 @@ func (item *Command) checkItem() error {
 	if item.User != "" {
 		_, err = user.Lookup(item.User)
 		if err != nil {
-			util.Logger.Error("User does not exist: ", item.User)
+			util.Logger.Error("User does not exist: " + item.User)
 			return err
 		}
 	}
@@ -104,7 +104,7 @@ func (item *Command) fastRun(line string) bool {
 	item.setPath(cmd)
 	err = cmd.Run()
 	if err != nil {
-		util.Logger.Debug(err.Error())
+		util.Logger.Debug("Error occourred when running: " + line + "\n" + err.Error())
 		return false
 	}
 	return true
@@ -126,10 +126,10 @@ func (item *Command) runWithMessage() error {
 	errPipe, _ = cmd.StderrPipe()
 	err = cmd.Start()
 	if err != nil {
-		util.Logger.Error("Can not start command: ", item.Command)
+		util.Logger.Error("Can not start default shell: " + command.DefaultShell + "\n" + err.Error())
 		return err
 	} else {
-		util.Logger.Info("Running command: ", item.Command)
+		util.Logger.Info("Running command...")
 	}
 
 	//real-time output of std out
@@ -153,7 +153,7 @@ func (item *Command) runWithMessage() error {
 	}
 	err = cmd.Wait()
 	if err != nil {
-		util.Logger.Error("Command finished, but error occourred: ", item.Command)
+		util.Logger.Error("Error occourred when running: " + item.Command + "\n" + err.Error())
 		return err
 	} else {
 		return nil
