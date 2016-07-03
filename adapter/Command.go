@@ -153,9 +153,10 @@ func (item *Command) runWithMessage() error {
 	}
 	err = cmd.Wait()
 	if err != nil {
-		util.Logger.Error("Error occourred when running: " + item.Command + "\n" + err.Error())
+		util.Logger.Error("Failed to  run commnad.")
 		return err
 	} else {
+		util.Logger.Info("Succeed to run commnad.")
 		return nil
 	}
 }

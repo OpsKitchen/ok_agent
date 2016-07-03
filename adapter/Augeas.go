@@ -137,6 +137,6 @@ func (item *Augeas) saveAugeas() error {
 		util.Logger.Error("Failed to save augeas config option: " + err.Error())
 		return err
 	}
-	util.Logger.Info(item.OptionPath + "@" + item.FilePath + " has been set to '" + item.OptionValue + "'")
+	util.Logger.Info("Succeed to set " + item.OptionPath + "@" + item.FilePath + " to '" + item.OptionValue + "'")
 	return nil
 }

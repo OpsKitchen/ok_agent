@@ -6,22 +6,29 @@ import (
 	"github.com/Sirupsen/logrus"
 )
 
-var DebugMode bool
+var DebugAgent bool
 
 func main() {
 	var baseConfigFile *string
-	var debugMode *bool
+	var debugAgent *bool
+	var debugApi *bool
 	var dispatcher *Dispatcher
 
 	//parse config file from cli argument
 	baseConfigFile = flag.String("c", "/etc/ok_agent.json", "base config file path")
-	debugMode = flag.Bool("d", false, "enable debug mode")
+	debugAgent = flag.Bool("d", false, "enable debug mode")
+	debugApi = flag.Bool("debug-api", false, "enable open api debug log")
 	flag.Parse()
 
-	//enable debug log
-	if *debugMode {
-		DebugMode = true
+	//enable agent debug mode
+	if *debugAgent {
+		DebugAgent = true
 		util.Logger.Level = logrus.DebugLevel
+	}
+
+	//enable api log
+	if *debugApi {
+		util.ApiLogger.Level = logrus.DebugLevel
 	}
 
 	//dispatch

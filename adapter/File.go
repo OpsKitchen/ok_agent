@@ -167,7 +167,7 @@ func (item *File) processDir() error {
 			util.Logger.Error("Failed to create directory: " + item.FilePath + "\n" + err.Error())
 			return err
 		}
-		util.Logger.Info("New directory created.")
+		util.Logger.Info("Succeed to create directory.")
 	} else {
 		util.Logger.Debug("Directory already exists, skip creating.")
 	}
@@ -198,7 +198,7 @@ func (item *File) processFile() error {
 			util.Logger.Error("Failed to create file: " + item.FilePath + "\n" + err.Error())
 			return err
 		}
-		util.Logger.Info("New file created.")
+		util.Logger.Info("Succeed to create file.")
 		skipWriteContent = item.FileContent == ""
 	} else {
 		util.Logger.Debug("File already exists, skip creating.")
@@ -254,7 +254,7 @@ func (item *File) processLink() error {
 		util.Logger.Error("Failed to create link: " + item.FilePath + "\n" + err.Error())
 		return err
 	}
-	util.Logger.Info("Symbol link created.")
+	util.Logger.Info("Succeed to create symbol link.")
 	return nil
 }
 
@@ -279,10 +279,10 @@ func (item *File) changeOwnership() error {
 
 		err = os.Lchown(item.FilePath, int(item.gid), int(item.gid))
 		if err != nil {
-			util.Logger.Error("Failed to change owner/group to: " + item.User + "/" + item.Group  + "\n" + err.Error())
+			util.Logger.Error("Failed to change owner/group to: " + item.User + "/" + item.Group + "\n" + err.Error())
 			return err
 		}
-		util.Logger.Info("Ownership changed.")
+		util.Logger.Info("Succeed to change ownership.")
 	}
 	return nil
 }
@@ -302,7 +302,7 @@ func (item *File) changePermission() error {
 			util.Logger.Error("Failed to change permission: " + item.FilePath + "\n" + err.Error())
 			return err
 		}
-		util.Logger.Info("File permission changed.")
+		util.Logger.Info("Succeed to change file permission.")
 	}
 	return nil
 }
@@ -364,7 +364,7 @@ func (item *File) createParentDir() error {
 		util.Logger.Error("Failed to create parent directory: " + parentDir + "\n" + err.Error())
 		return err
 	}
-	util.Logger.Info("Parent directory created: ", parentDir)
+	util.Logger.Info("Succeed to create parent directory: ", parentDir)
 	return nil
 }
 
@@ -381,6 +381,6 @@ func (item *File) writeContent() error {
 		util.Logger.Error("Failed to write content to: " + item.FilePath + "\n" + err.Error())
 		return err
 	}
-	util.Logger.Info("Content written.")
+	util.Logger.Info("Succeed to write content.")
 	return nil
 }

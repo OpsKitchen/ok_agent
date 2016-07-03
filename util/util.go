@@ -7,6 +7,7 @@ import (
 )
 
 var Logger = logrus.New()
+var ApiLogger = logrus.New()
 
 func FileExist(path string) bool {
 	var err error

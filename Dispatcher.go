@@ -80,7 +80,7 @@ func (dispatcher *Dispatcher) parseCredentialConfig() {
 func (dispatcher *Dispatcher) prepareApiClient() {
 	var client *sdk.Client = sdk.NewClient()
 	//inject logger
-	sdk.SetDefaultLogger(util.Logger)
+	sdk.SetDefaultLogger(util.ApiLogger)
 
 	//init config
 	client.RequestBuilder.Config.SetAppMarketIdValue(dispatcher.Config.AppMarketId).SetAppVersionValue(
@@ -108,7 +108,7 @@ func (dispatcher *Dispatcher) prepareDynamicApiList() {
 		dispatcher.Config.EntranceApiVersion, dispatcher.ApiParam, &dispatcher.DynamicApiList)
 
 	if err != nil {
-		util.Logger.Fatal("Call entrance api failed")
+		util.Logger.Fatal("Failed to call entrance api.")
 	}
 	if apiResult.Success == false {
 		util.Logger.Fatal("Entrance api return error: " + apiResult.ErrorCode + "\t" + apiResult.ErrorMessage)
@@ -116,7 +116,7 @@ func (dispatcher *Dispatcher) prepareDynamicApiList() {
 	if len(dispatcher.DynamicApiList) == 0 {
 		util.Logger.Fatal("Entrance api return empty api list")
 	}
-	util.Logger.Info("Call entrance api successfully")
+	util.Logger.Info("Succeed to call entrance api.")
 }
 
 func (dispatcher *Dispatcher) processDynamicApi() {
@@ -131,7 +131,7 @@ func (dispatcher *Dispatcher) processDynamicApi() {
 		//call dynamic api
 		apiResult, err = dispatcher.ApiClient.CallApi(dynamicApi.Name, dynamicApi.Version, dispatcher.ApiParam, nil)
 		if err != nil {
-			util.Logger.Fatal("Call api failed: ", dynamicApi.Name, dynamicApi.Version)
+			util.Logger.Fatal("Failed to call api: ", dynamicApi.Name, dynamicApi.Version)
 		}
 		if apiResult.Success == false {
 			util.Logger.Fatal("Api return error: ", apiResult.ErrorCode, apiResult.ErrorMessage)
@@ -156,7 +156,7 @@ func (dispatcher *Dispatcher) processDynamicApi() {
 				err = item.Process()
 				if err != nil {
 					errorCount++
-					if DebugMode == true {
+					if DebugAgent == true {
 						os.Exit(1)
 					}
 				}
@@ -170,7 +170,7 @@ func (dispatcher *Dispatcher) processDynamicApi() {
 				err = item.Process()
 				if err != nil {
 					errorCount++
-					if DebugMode == true {
+					if DebugAgent == true {
 						os.Exit(1)
 					}
 				}
@@ -184,7 +184,7 @@ func (dispatcher *Dispatcher) processDynamicApi() {
 				err = item.Process()
 				if err != nil {
 					errorCount++
-					if DebugMode == true {
+					if DebugAgent == true {
 						os.Exit(1)
 					}
 				}
