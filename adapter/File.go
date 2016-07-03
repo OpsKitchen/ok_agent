@@ -170,18 +170,20 @@ func (item *File) processDir() error {
 		util.Logger.Info("New directory created: ", item.FilePath)
 	} else {
 		util.Logger.Debug("Directory already exists, skip creating: ", item.FilePath)
-		//change permission
-		err = item.changePermission()
-		if err != nil {
-			return err
-		}
 	}
 
+	//change permission
 	err = item.changeOwnership()
 	if err != nil {
 		return err
 	}
 
+	//change permission
+	err = item.changePermission()
+	if err != nil {
+		return err
+	}
+	
 	return nil
 }
 
@@ -220,11 +222,9 @@ func (item *File) processFile() error {
 	}
 
 	//change permission
-	if item.pathExist == true { //new dir has correct perm
-		err = item.changePermission()
-		if err != nil {
-			return err
-		}
+	err = item.changePermission()
+	if err != nil {
+		return err
 	}
 
 	return nil
