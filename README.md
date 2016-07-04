@@ -2,6 +2,9 @@
 Linux agent for OpsKitchen.com
 
 ## Get started
+### Install requirements
+    yum install -y libxml2-devel augeas-devel gcc git
+
 ### Prepare Go SDK
 Download go SDK 1.7 from: https://golang.org/dl/
 
