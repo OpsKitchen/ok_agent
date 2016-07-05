@@ -1,11 +1,9 @@
 {
   "AgentVersion"       : "1.1.0",
   "AppMarketId"        : "520",
-  "CredentialFile"     : "credential.json",
+  "CredentialFile"     : "/root/.ok_agent/credential.json",
+  "DisableSSL"         : true,
   "EntranceApiName"    : "ops.server.listAgentApi",
   "EntranceApiVersion" : "1.0",
-  "GatewayHost"        : "api.OpsKitchen.com",
-  "DisableSSL"         : true,
-  "LogDir"             : "/var/log/ok_agent",
-  "LogLevel"           : "DEBUG"
+  "GatewayHost"        : "api.OpsKitchen.com"
 }
