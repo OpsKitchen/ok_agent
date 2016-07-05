@@ -49,7 +49,7 @@ This is the linux agent for OpsKitchen.com
 %setup -q
 
 %build
-go build
+#go build
 
 %install
 rm -rf \$RPM_BUILD_ROOT
