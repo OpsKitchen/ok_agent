@@ -15,16 +15,18 @@ cwd=`pwd`
 version=`grep AgentVersion ok_agent.json | awk -F '"' '{print $4}'`
 prod_name_with_version=${prod_name}-${version}
 
+#compile go code
+go build
 
 #prepare src dir
 mkdir -p ${src_dir}
 
 #compress source
 cd ${src_dir}
+rm -rf ${prod_name_with_version}/
 mkdir -p ${prod_name_with_version}
-cp -r ${cwd}/* ${prod_name_with_version}
+cp -r ${cwd}/* ${prod_name_with_version}/
 tar zcf ${prod_name_with_version}.tar.gz ${prod_name_with_version}/
-rm -rf ${prod_name_with_version}/*
 cd ${cwd}
 
 echo "
@@ -51,10 +53,10 @@ go build
 rm -rf \$RPM_BUILD_ROOT
 mkdir -p \$RPM_BUILD_ROOT/usr/sbin
 mkdir -p \$RPM_BUILD_ROOT/etc
-mkdir -p  \$RPM_BUILD_ROOT/root/.ok_agent
+mkdir -p \$RPM_BUILD_ROOT/root/.ok_agent
 
-install -m 755 ok_agent \$RPM_BUILD_ROOT/usr/sbin/ok_agent
-install -m 755 ok_agent.json \$RPM_BUILD_ROOT/etc/ok_agent.json
+install -m 755 ok_agent        \$RPM_BUILD_ROOT/usr/sbin/ok_agent
+install -m 755 ok_agent.json   \$RPM_BUILD_ROOT/etc/ok_agent.json
 install -m 400 credential.json \$RPM_BUILD_ROOT/root/.ok_agent/credential.json
 
 %files
