@@ -2,7 +2,7 @@
   "AgentVersion"       : "1.1.0",
   "AppMarketId"        : "520",
   "CredentialFile"     : "/root/.ok_agent/credential.json",
-  "DisableSSL"         : true,
+  "DisableSSL"         : false,
   "EntranceApiName"    : "ops.server.listAgentApi",
   "EntranceApiVersion" : "1.0",
   "GatewayHost"        : "api.OpsKitchen.com"
