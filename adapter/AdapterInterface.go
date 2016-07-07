@@ -1,7 +1,8 @@
 package adapter
 
 type AdapterInterface interface {
-	CheckItem() error
-	ParseItem() error
-	ProcessItem() error
+	Brief() string
+	Check() error
+	Parse() error
+	Process() error
 }

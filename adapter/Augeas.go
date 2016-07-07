@@ -20,7 +20,16 @@ type Augeas struct {
 }
 
 //***** interface method area *****//
-func (item *Augeas) CheckItem() error {
+func (item *Augeas) Brief() string {
+	var brief string
+	brief = "\nFile path: \t" + item.FilePath + "\nLens: \t\t" + item.Lens + "\nOption path: \t" + item.OptionPath
+	if item.OptionValue != "" {
+		brief += "\nOption value: \t" + item.OptionValue
+	}
+	return brief
+}
+
+func (item *Augeas) Check() error {
 	var errMsg string
 
 	//check file path
@@ -54,17 +63,15 @@ func (item *Augeas) CheckItem() error {
 	return nil
 }
 
-func (item *Augeas) ParseItem() error {
+func (item *Augeas) Parse() error {
 	item.fullOptionPath = agadapter.ContextRoot + item.FilePath + "/" + item.OptionPath
 	item.incl = agadapter.ContextRoot + item.FilePath
 	item.lensFile = item.Lens + agadapter.LensSuffix
 	return nil
 }
 
-func (item *Augeas) ProcessItem() error {
+func (item *Augeas) Process() error {
 	var err error
-	util.Logger.Info("Processing Augeas: ", item.OptionPath, "@", item.FilePath)
-
 	//save Augeas
 	err = item.saveAugeas()
 	if err != nil {

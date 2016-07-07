@@ -29,7 +29,22 @@ type File struct {
 }
 
 //***** interface method area *****//
-func (item *File) CheckItem() error {
+func (item *File) Brief() string {
+	var brief string
+	brief = "\nFile path: \t" + item.FilePath + "\nFile type: \t" + item.FileType
+	if item.User != "" {
+		brief += "\nUser: \t\t" + item.User
+	}
+	if item.Group != "" {
+		brief += "\nGroup: \t\t" + item.Group
+	}
+	if item.Permission != "" {
+		brief += "\nPermission: \t" + item.Permission
+	}
+	return brief
+}
+
+func (item *File) Check() error {
 	var errMsg string
 	//check file type
 	if item.FileType == "" {
@@ -38,7 +53,7 @@ func (item *File) CheckItem() error {
 		return errors.New(errMsg)
 	}
 	if item.FileType != file.FileTypeDir && item.FileType != file.FileTypeFile && item.FileType != file.FileTypeLink {
-		errMsg = "Unsupported file type: " + item.FileType
+		errMsg = "Unsupported file type"
 		util.Logger.Error(errMsg)
 		return errors.New(errMsg)
 	}
@@ -64,7 +79,7 @@ func (item *File) CheckItem() error {
 	return nil
 }
 
-func (item *File) ParseItem() error {
+func (item *File) Parse() error {
 	var err error
 	var filePerm uint64
 	var gid, uid uint64
@@ -84,7 +99,7 @@ func (item *File) ParseItem() error {
 	} else {
 		filePerm, err = strconv.ParseUint(item.Permission, 8, 32)
 		if err != nil {
-			util.Logger.Error("Invalid file mode: " + item.Permission)
+			util.Logger.Error("Invalid file permission")
 			return err
 		}
 		item.perm = os.FileMode(filePerm)
@@ -94,13 +109,13 @@ func (item *File) ParseItem() error {
 	if item.User != "" && item.Group != "" {
 		groupObj, err = user.LookupGroup(item.Group)
 		if err != nil {
-			util.Logger.Error("Group does not exist: " + item.Group)
+			util.Logger.Error("Group does not exist")
 			return err
 		}
 
 		userObj, err = user.Lookup(item.User)
 		if err != nil {
-			util.Logger.Error("User does not exist: " + item.User)
+			util.Logger.Error("User does not exist")
 			return err
 		}
 		gid, _ = strconv.ParseUint(groupObj.Gid, 10, 32)
@@ -112,11 +127,8 @@ func (item *File) ParseItem() error {
 	return nil
 }
 
-func (item *File) ProcessItem() error {
+func (item *File) Process() error {
 	var err error
-	var errMsg string
-	util.Logger.Info("Processing file: ", item.FilePath)
-
 	//check path exist
 	err = item.checkFilePathExistence()
 	if err != nil {
@@ -136,10 +148,6 @@ func (item *File) ProcessItem() error {
 		return item.processFile()
 	case file.FileTypeLink:
 		return item.processLink()
-	default:
-		errMsg = "Unsupported file type: " + item.FileType
-		util.Logger.Error(errMsg)
-		return errors.New(errMsg)
 	}
 	return nil
 }
@@ -153,7 +161,7 @@ func (item *File) processDir() error {
 	if item.pathExist == false {
 		err = os.Mkdir(item.FilePath, item.perm)
 		if err != nil {
-			util.Logger.Error("Failed to create directory: " + item.FilePath + "\n" + err.Error())
+			util.Logger.Error("Failed to create directory: " + err.Error())
 			return err
 		}
 		util.Logger.Info("Succeed to create directory.")
@@ -184,7 +192,7 @@ func (item *File) processFile() error {
 	if item.pathExist == false {
 		_, err = os.Create(item.FilePath)
 		if err != nil {
-			util.Logger.Error("Failed to create file: " + item.FilePath + "\n" + err.Error())
+			util.Logger.Error("Failed to create file: " + err.Error())
 			return err
 		}
 		util.Logger.Info("Succeed to create file.")
@@ -232,7 +240,7 @@ func (item *File) processLink() error {
 		}
 		err = os.Remove(item.FilePath)
 		if err != nil {
-			util.Logger.Error("Failed to remove symbol old symbol link: " + item.FilePath + "\n" + err.Error())
+			util.Logger.Error("Failed to remove symbol old symbol link: " + err.Error())
 			return err
 		}
 	}
@@ -240,7 +248,7 @@ func (item *File) processLink() error {
 	//create link
 	err = os.Symlink(item.Target, item.FilePath)
 	if err != nil {
-		util.Logger.Error("Failed to create link: " + item.FilePath + "\n" + err.Error())
+		util.Logger.Error("Failed to create link: " + err.Error())
 		return err
 	}
 	util.Logger.Info("Succeed to create symbol link.")
@@ -268,7 +276,7 @@ func (item *File) changeOwnership() error {
 
 		err = os.Lchown(item.FilePath, int(item.gid), int(item.gid))
 		if err != nil {
-			util.Logger.Error("Failed to change owner/group to: " + item.User + "/" + item.Group + "\n" + err.Error())
+			util.Logger.Error("Failed to change ownership: " + err.Error())
 			return err
 		}
 		util.Logger.Info("Succeed to change ownership.")
@@ -288,7 +296,7 @@ func (item *File) changePermission() error {
 		}
 		err = os.Chmod(item.FilePath, item.perm)
 		if err != nil {
-			util.Logger.Error("Failed to change permission: " + item.FilePath + "\n" + err.Error())
+			util.Logger.Error("Failed to change permission: " + err.Error())
 			return err
 		}
 		util.Logger.Info("Succeed to change file permission.")
@@ -309,19 +317,19 @@ func (item *File) checkFilePathExistence() error {
 	switch item.FileType {
 	case file.FileTypeDir:
 		if stat.Mode().IsDir() == false {
-			errMsg = "Path name already exists, but is not a directory: " + item.FilePath
+			errMsg = "Path name already exists, but is not a directory"
 			util.Logger.Error(errMsg)
 			return errors.New(errMsg)
 		}
 	case file.FileTypeFile:
 		if stat.Mode().IsRegular() == false {
-			errMsg = "Path name already exists, but is not a regular file: " + item.FilePath
+			errMsg = "Path name already exists, but is not a regular file"
 			util.Logger.Error(errMsg)
 			return errors.New(errMsg)
 		}
 	case file.FileTypeLink:
 		if stat.Mode()&os.ModeSymlink == 0 { // is not symbol link
-			errMsg = "Path name already exists, but is not a symbol link: " + item.FilePath
+			errMsg = "Path name already exists, but is not a symbol link"
 			util.Logger.Error(errMsg)
 			return errors.New(errMsg)
 		}
@@ -367,7 +375,7 @@ func (item *File) writeContent() error {
 	}
 	err = ioutil.WriteFile(item.FilePath, []byte(item.FileContent), item.perm)
 	if err != nil {
-		util.Logger.Error("Failed to write content to: " + item.FilePath + "\n" + err.Error())
+		util.Logger.Error("Failed to write content: " + err.Error())
 		return err
 	}
 	util.Logger.Info("Succeed to write content.")

@@ -156,19 +156,16 @@ func (dispatcher *Dispatcher) processDynamicApi() {
 
 			default:
 				util.Logger.Fatal("Unsupported list: ", dynamicApi.ReturnDataType)
-			} //end switch
+			}
+
+			//data type casting with json
 			err = util.JsonConvert(mapItem, &item)
-			if err == nil {
-				err = item.CheckItem()
-				if err == nil {
-					err = item.ParseItem()
-					if err == nil {
-						err = item.ProcessItem()
-						if err == nil {
-							continue
-						}
-					}
-				}
+			if err != nil {
+				util.Logger.Fatal("Failed to convert item data type")
+			}
+			util.Logger.Info("Processing..." + item.Brief())
+			if item.Check() == nil && item.Parse() == nil && item.Process() == nil {
+				continue
 			}
 
 			errorCount++

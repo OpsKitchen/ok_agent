@@ -21,7 +21,25 @@ type Command struct {
 }
 
 //***** interface method area *****//
-func (item *Command) CheckItem() error {
+func (item *Command) Brief() string {
+	var brief string
+	brief = "\nCommand: \t" + item.Command
+	if item.Cwd != "" {
+		brief += "\nCwd: \t\t" + item.Cwd
+	}
+	if item.User != "" {
+		brief += "\nUser: \t\t" + item.User
+	}
+	if item.RunIf != "" {
+		brief += "\nRun if: \t" + item.RunIf
+	}
+	if item.NotRunIf != "" {
+		brief += "\nNot run if: \t" + item.NotRunIf
+	}
+	return brief
+}
+
+func (item *Command) Check() error {
 	var err error
 	var errMsg string
 	var stat os.FileInfo
@@ -37,11 +55,11 @@ func (item *Command) CheckItem() error {
 	if item.Cwd != "" {
 		stat, err = os.Stat(item.Cwd)
 		if err != nil {
-			errMsg = "Cwd does not exist: " + item.Cwd
+			errMsg = "Cwd does not exist"
 			util.Logger.Error(errMsg)
 			return errors.New(errMsg)
 		} else if stat.IsDir() == false {
-			errMsg = "Cwd is not a directory: " + item.Cwd
+			errMsg = "Cwd is not a directory"
 			util.Logger.Error(errMsg)
 			return errors.New(errMsg)
 		}
@@ -51,23 +69,21 @@ func (item *Command) CheckItem() error {
 	if item.User != "" {
 		_, err = user.Lookup(item.User)
 		if err != nil {
-			util.Logger.Error("User does not exist: " + item.User)
+			util.Logger.Error("User does not exist")
 			return err
 		}
 	}
 	return nil
 }
 
-func (item *Command) ParseItem() error {
+func (item *Command) Parse() error {
 	if item.User == "" {
 		item.User = command.DefaultUser
 	}
 	return nil
 }
 
-func (item *Command) ProcessItem() error {
-	util.Logger.Info("Processing command: ", item.Command)
-
+func (item *Command) Process() error {
 	//check if necessary to run command
 	if item.RunIf != "" && item.fastRun(item.RunIf) == false {
 		util.Logger.Debug("'RunIf' retunrs false, skip running command.")
