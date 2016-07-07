@@ -158,17 +158,15 @@ func (dispatcher *Dispatcher) processDynamicApi() {
 				util.Logger.Fatal("Unsupported list: ", dynamicApi.ReturnDataType)
 			} //end switch
 			err = util.JsonConvert(mapItem, &item)
-			if err != nil {
-				util.Logger.Error(err.Error())
-			}
-
-			err = item.CheckItem()
 			if err == nil {
-				err = item.ParseItem()
+				err = item.CheckItem()
 				if err == nil {
-					err = item.ProcessItem()
+					err = item.ParseItem()
 					if err == nil {
-						continue
+						err = item.ProcessItem()
+						if err == nil {
+							continue
+						}
 					}
 				}
 			}
@@ -177,8 +175,8 @@ func (dispatcher *Dispatcher) processDynamicApi() {
 			if DebugAgent == true {
 				os.Exit(1)
 			}
-		}
-	} //end for
+		} //end for "range apiResultData"
+	} //end for "range dispatcher.DynamicApiList"
 
 	if errorCount > 0 {
 		util.Logger.Fatal(errorCount, " error(s) occourred, run me with '-d' option to see more detail")

@@ -20,7 +20,13 @@ func JsonConvert(fromPointer interface{}, toPointer interface{}) error {
 	var err error
 	byteArray, err = json.Marshal(fromPointer)
 	if err != nil {
+		Logger.Error("Failed to encode while type converting with json: " + err.Error())
 		return err
 	}
-	return json.Unmarshal(byteArray, toPointer)
+	err = json.Unmarshal(byteArray, toPointer)
+	if err != nil {
+		Logger.Error("Failed to decode while type converting with json: " + err.Error())
+		return err
+	}
+	return nil
 }
