@@ -2,7 +2,6 @@ package main
 
 import (
 	"encoding/json"
-	"github.com/OpsKitchen/ok_agent/adapter"
 	"github.com/OpsKitchen/ok_agent/model/api"
 	"github.com/OpsKitchen/ok_agent/model/api/returndata"
 	"github.com/OpsKitchen/ok_agent/model/config"
@@ -10,8 +9,8 @@ import (
 	"github.com/OpsKitchen/ok_api_sdk_go/sdk"
 	"github.com/OpsKitchen/ok_api_sdk_go/sdk/model"
 	"io/ioutil"
+	"github.com/OpsKitchen/ok_agent/adapter"
 	"os"
-	"reflect"
 )
 
 type Dispatcher struct {
@@ -122,14 +121,15 @@ func (dispatcher *Dispatcher) prepareDynamicApiList() {
 func (dispatcher *Dispatcher) processDynamicApi() {
 	var dynamicApi returndata.DynamicApi
 	var errorCount int
+	var item adapter.AdapterInterface
 	for _, dynamicApi = range dispatcher.DynamicApiList {
 		util.Logger.Debug("Calling dynamic api: ", dynamicApi.Name)
 		var apiResult *model.ApiResult
-		var apiResultDataKind reflect.Kind
+		var apiResultData []map[string]interface{}
 		var err error
 
 		//call dynamic api
-		apiResult, err = dispatcher.ApiClient.CallApi(dynamicApi.Name, dynamicApi.Version, dispatcher.ApiParam, nil)
+		apiResult, err = dispatcher.ApiClient.CallApi(dynamicApi.Name, dynamicApi.Version, dispatcher.ApiParam, &apiResultData)
 		if err != nil {
 			util.Logger.Fatal("Failed to call api: ", dynamicApi.Name, dynamicApi.Version)
 		}
@@ -142,56 +142,35 @@ func (dispatcher *Dispatcher) processDynamicApi() {
 		}
 
 		//cast item list to native go type
-		apiResultDataKind = reflect.TypeOf(apiResult.Data).Kind()
-		if apiResultDataKind != reflect.Slice {
-			util.Logger.Fatal("Wrong return data type, expected list, got: ", reflect.TypeOf(apiResult.Data))
+		for _, mapItem := range apiResultData {
+			util.Logger.Debug(mapItem)
+			switch dynamicApi.ReturnDataType {
+			case returndata.AugeasList:
+				item = &adapter.Augeas{}
+
+			case returndata.CommandList:
+				item = &adapter.Command{}
+
+			case returndata.FileList:
+				item = &adapter.File{}
+
+			default:
+				util.Logger.Fatal("Unsupported list: ", dynamicApi.ReturnDataType)
+			} //end switch
+			err = util.JsonConvert(mapItem, &item)
+			if err != nil {
+				util.Logger.Debug(mapItem)
+				util.Logger.Error(err.Error())
+			}
+
+			err = item.Process()
+			if err != nil {
+				errorCount++
+				if DebugAgent == true {
+					os.Exit(1)
+				}
+			}
 		}
-
-		switch dynamicApi.ReturnDataType {
-		case returndata.AugeasList:
-			var item adapter.Augeas
-			var itemList []adapter.Augeas = []adapter.Augeas{}
-			err = util.JsonConvert(apiResult.Data, &itemList)
-			for _, item = range itemList {
-				err = item.Process()
-				if err != nil {
-					errorCount++
-					if DebugAgent == true {
-						os.Exit(1)
-					}
-				}
-			}
-
-		case returndata.CommandList:
-			var item adapter.Command
-			var itemList []adapter.Command = []adapter.Command{}
-			err = util.JsonConvert(apiResult.Data, &itemList)
-			for _, item = range itemList {
-				err = item.Process()
-				if err != nil {
-					errorCount++
-					if DebugAgent == true {
-						os.Exit(1)
-					}
-				}
-			}
-
-		case returndata.FileList:
-			var item adapter.File
-			var itemList []adapter.File = []adapter.File{}
-			err = util.JsonConvert(apiResult.Data, &itemList)
-			for _, item = range itemList {
-				err = item.Process()
-				if err != nil {
-					errorCount++
-					if DebugAgent == true {
-						os.Exit(1)
-					}
-				}
-			}
-		default:
-			util.Logger.Fatal("Unsupported list: ", dynamicApi.ReturnDataType)
-		} //end switch
 	} //end for
 
 	if errorCount > 0 {
