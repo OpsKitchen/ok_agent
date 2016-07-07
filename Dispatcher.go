@@ -144,7 +144,6 @@ func (dispatcher *Dispatcher) processDynamicApi() {
 
 		//cast item list to native go type
 		for _, mapItem = range apiResultData {
-			util.Logger.Debug(mapItem)
 			switch dynamicApi.ReturnDataType {
 			case returndata.AugeasList:
 				item = &adapter.Augeas{}
@@ -160,7 +159,6 @@ func (dispatcher *Dispatcher) processDynamicApi() {
 			} //end switch
 			err = util.JsonConvert(mapItem, &item)
 			if err != nil {
-				util.Logger.Debug(mapItem)
 				util.Logger.Error(err.Error())
 			}
 
