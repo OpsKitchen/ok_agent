@@ -61,7 +61,7 @@ func (item *Augeas) ParseItem() error {
 	return nil
 }
 
-func (item *Augeas) Process() error {
+func (item *Augeas) ProcessItem() error {
 	var err error
 	util.Logger.Info("Processing Augeas: ", item.OptionPath, "@", item.FilePath)
 
@@ -73,6 +73,7 @@ func (item *Augeas) Process() error {
 
 	return nil
 }
+
 //***** interface method area *****//
 
 func (item *Augeas) saveAugeas() error {

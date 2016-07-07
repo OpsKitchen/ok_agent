@@ -112,7 +112,7 @@ func (item *File) ParseItem() error {
 	return nil
 }
 
-func (item *File) Process() error {
+func (item *File) ProcessItem() error {
 	var err error
 	var errMsg string
 	util.Logger.Info("Processing file: ", item.FilePath)
@@ -143,6 +143,7 @@ func (item *File) Process() error {
 	}
 	return nil
 }
+
 //***** interface method area *****//
 
 func (item *File) processDir() error {

@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"github.com/OpsKitchen/ok_agent/adapter"
 	"github.com/OpsKitchen/ok_agent/model/api"
 	"github.com/OpsKitchen/ok_agent/model/api/returndata"
 	"github.com/OpsKitchen/ok_agent/model/config"
@@ -9,7 +10,6 @@ import (
 	"github.com/OpsKitchen/ok_api_sdk_go/sdk"
 	"github.com/OpsKitchen/ok_api_sdk_go/sdk/model"
 	"io/ioutil"
-	"github.com/OpsKitchen/ok_agent/adapter"
 	"os"
 )
 
@@ -165,13 +165,19 @@ func (dispatcher *Dispatcher) processDynamicApi() {
 			}
 
 			err = item.CheckItem()
-			err = item.ParseItem()
-			err = item.Process()
-			if err != nil {
-				errorCount++
-				if DebugAgent == true {
-					os.Exit(1)
+			if err == nil {
+				err = item.ParseItem()
+				if err == nil {
+					err = item.ProcessItem()
+					if err == nil {
+						continue
+					}
 				}
+			}
+
+			errorCount++
+			if DebugAgent == true {
+				os.Exit(1)
 			}
 		}
 	} //end for

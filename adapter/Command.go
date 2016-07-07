@@ -65,7 +65,7 @@ func (item *Command) ParseItem() error {
 	return nil
 }
 
-func (item *Command) Process() error {
+func (item *Command) ProcessItem() error {
 	util.Logger.Info("Processing command: ", item.Command)
 
 	//check if necessary to run command
@@ -81,6 +81,7 @@ func (item *Command) Process() error {
 	//run command
 	return item.runWithMessage()
 }
+
 //***** interface method area *****//
 
 func (item *Command) fastRun(line string) bool {
