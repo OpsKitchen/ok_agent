@@ -17,6 +17,10 @@ func FileExist(path string) bool {
 
 func JsonConvert(fromPointer interface{}, toPointer interface{}) error {
 	var byteArray []byte
-	byteArray, _ = json.Marshal(fromPointer)
+	var err error
+	byteArray, err = json.Marshal(fromPointer)
+	if err != nil {
+		return err
+	}
 	return json.Unmarshal(byteArray, toPointer)
 }
