@@ -29,50 +29,7 @@ type File struct {
 }
 
 //***** interface method area *****//
-func (item *File) Process() error {
-	var err error
-	var errMsg string
-	util.Logger.Info("Processing file: ", item.FilePath)
-	//check file type
-	err = item.checkItem()
-	if err != nil {
-		return err
-	}
-
-	//parse item field
-	err = item.parseItem()
-	if err != nil {
-		return err
-	}
-
-	//check path exist
-	err = item.checkFilePathExistence()
-	if err != nil {
-		return err
-	}
-
-	//create parent dir
-	err = item.createParentDir()
-	if err != nil {
-		return err
-	}
-
-	switch item.FileType {
-	case file.FileTypeDir:
-		return item.processDir()
-	case file.FileTypeFile:
-		return item.processFile()
-	case file.FileTypeLink:
-		return item.processLink()
-	default:
-		errMsg = "Unsupported file type: " + item.FileType
-		util.Logger.Error(errMsg)
-		return errors.New(errMsg)
-	}
-	return nil
-}
-
-func (item *File) checkItem() error {
+func (item *File) CheckItem() error {
 	var errMsg string
 	//check file type
 	if item.FileType == "" {
@@ -107,7 +64,7 @@ func (item *File) checkItem() error {
 	return nil
 }
 
-func (item *File) parseItem() error {
+func (item *File) ParseItem() error {
 	var err error
 	var filePerm uint64
 	var gid, uid uint64
@@ -155,6 +112,37 @@ func (item *File) parseItem() error {
 	return nil
 }
 
+func (item *File) Process() error {
+	var err error
+	var errMsg string
+	util.Logger.Info("Processing file: ", item.FilePath)
+
+	//check path exist
+	err = item.checkFilePathExistence()
+	if err != nil {
+		return err
+	}
+
+	//create parent dir
+	err = item.createParentDir()
+	if err != nil {
+		return err
+	}
+
+	switch item.FileType {
+	case file.FileTypeDir:
+		return item.processDir()
+	case file.FileTypeFile:
+		return item.processFile()
+	case file.FileTypeLink:
+		return item.processLink()
+	default:
+		errMsg = "Unsupported file type: " + item.FileType
+		util.Logger.Error(errMsg)
+		return errors.New(errMsg)
+	}
+	return nil
+}
 //***** interface method area *****//
 
 func (item *File) processDir() error {

@@ -21,37 +21,7 @@ type Command struct {
 }
 
 //***** interface method area *****//
-func (item *Command) Process() error {
-	var err error
-	util.Logger.Info("Processing command: ", item.Command)
-
-	//check item data
-	err = item.checkItem()
-	if err != nil {
-		return err
-	}
-
-	//parse item field
-	err = item.parseItem()
-	if err != nil {
-		return err
-	}
-
-	//check if necessary to run command
-	if item.RunIf != "" && item.fastRun(item.RunIf) == false {
-		util.Logger.Debug("'RunIf' retunrs false, skip running command.")
-		return nil
-	}
-	if item.NotRunIf != "" && item.fastRun(item.NotRunIf) == true {
-		util.Logger.Debug("'NotRunIf' returns true, skip running command.")
-		return nil
-	}
-
-	//run command
-	return item.runWithMessage()
-}
-
-func (item *Command) checkItem() error {
+func (item *Command) CheckItem() error {
 	var err error
 	var errMsg string
 	var stat os.FileInfo
@@ -88,13 +58,29 @@ func (item *Command) checkItem() error {
 	return nil
 }
 
-func (item *Command) parseItem() error {
+func (item *Command) ParseItem() error {
 	if item.User == "" {
 		item.User = command.DefaultUser
 	}
 	return nil
 }
 
+func (item *Command) Process() error {
+	util.Logger.Info("Processing command: ", item.Command)
+
+	//check if necessary to run command
+	if item.RunIf != "" && item.fastRun(item.RunIf) == false {
+		util.Logger.Debug("'RunIf' retunrs false, skip running command.")
+		return nil
+	}
+	if item.NotRunIf != "" && item.fastRun(item.NotRunIf) == true {
+		util.Logger.Debug("'NotRunIf' returns true, skip running command.")
+		return nil
+	}
+
+	//run command
+	return item.runWithMessage()
+}
 //***** interface method area *****//
 
 func (item *Command) fastRun(line string) bool {

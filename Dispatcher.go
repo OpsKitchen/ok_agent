@@ -127,6 +127,7 @@ func (dispatcher *Dispatcher) processDynamicApi() {
 		var apiResult *model.ApiResult
 		var apiResultData []map[string]interface{}
 		var err error
+		var mapItem map[string]interface{}
 
 		//call dynamic api
 		apiResult, err = dispatcher.ApiClient.CallApi(dynamicApi.Name, dynamicApi.Version, dispatcher.ApiParam, &apiResultData)
@@ -142,7 +143,7 @@ func (dispatcher *Dispatcher) processDynamicApi() {
 		}
 
 		//cast item list to native go type
-		for _, mapItem := range apiResultData {
+		for _, mapItem = range apiResultData {
 			util.Logger.Debug(mapItem)
 			switch dynamicApi.ReturnDataType {
 			case returndata.AugeasList:
@@ -163,6 +164,8 @@ func (dispatcher *Dispatcher) processDynamicApi() {
 				util.Logger.Error(err.Error())
 			}
 
+			err = item.CheckItem()
+			err = item.ParseItem()
 			err = item.Process()
 			if err != nil {
 				errorCount++
