@@ -77,7 +77,8 @@ func (dispatcher *Dispatcher) parseCredentialConfig() {
 }
 
 func (dispatcher *Dispatcher) prepareApiClient() {
-	var client *sdk.Client = sdk.NewClient()
+	var client *sdk.Client
+	client = sdk.NewClient()
 	//inject logger
 	sdk.SetDefaultLogger(util.ApiLogger)
 
