@@ -8,14 +8,13 @@ import (
 )
 
 type Augeas struct {
+	Action      string
 	FilePath    string
 	Lens        string
 	OptionPath  string
 	OptionValue string
-
 	//internal fields, not for json
 	fullOptionPath string
-	incl           string
 	lensFile       string
 }
 
@@ -26,11 +25,20 @@ func (item *Augeas) Brief() string {
 	if item.OptionValue != "" {
 		brief += "\nOption value: \t" + item.OptionValue
 	}
+	if item.Action != "" {
+		brief += "\nAction: \t" + item.Action
+	}
 	return brief
 }
 
 func (item *Augeas) Check() error {
 	var errMsg string
+	//check action
+	if item.Action != "" && item.Action != agadapter.ActionRemove && item.Action != agadapter.ActionSet {
+		errMsg = "Action is invalid"
+		util.Logger.Error(errMsg)
+		return errors.New(errMsg)
+	}
 
 	//check file path
 	if item.FilePath == "" {
@@ -64,8 +72,10 @@ func (item *Augeas) Check() error {
 }
 
 func (item *Augeas) Parse() error {
+	if item.Action == "" {
+		item.Action = agadapter.ActionSet
+	}
 	item.fullOptionPath = agadapter.ContextRoot + item.FilePath + "/" + item.OptionPath
-	item.incl = agadapter.ContextRoot + item.FilePath
 	item.lensFile = item.Lens + agadapter.LensSuffix
 	return nil
 }
@@ -111,27 +121,42 @@ func (item *Augeas) saveAugeas() error {
 		return err
 	}
 
-	//read option value
-	oldOptionValue, err = ag.Get(item.fullOptionPath)
-	if err == nil && oldOptionValue == item.OptionValue {
-		util.Logger.Debug("Config option value is correct, skip setting.")
-		return nil
+	//remove action
+	if item.Action == agadapter.ActionSet { //action = "set"
+		oldOptionValue, err = ag.Get(item.fullOptionPath)
+		if err == nil && oldOptionValue == item.OptionValue {
+			util.Logger.Debug("Config option value is correct, skip setting.")
+			return nil
+		}
+
+		//set option value
+		err = ag.Set(item.fullOptionPath, item.OptionValue)
+		if err != nil {
+			util.Logger.Error("Failed to set option path and value: " + err.Error())
+			return err
+		}
+		util.Logger.Info("Succeed to set " + item.OptionPath + "@" + item.FilePath + " to '" + item.OptionValue + "'")
+	} else if item.Action == agadapter.ActionRemove { //action = "rm"
+		_, err = ag.Get(item.fullOptionPath)
+		if err != nil {
+			util.Logger.Debug("Config option does not exists, skip removing.")
+			return nil
+		}
+		var num int = ag.Remove(item.fullOptionPath)
+		if num == 0 {
+			util.Logger.Error("Failed to remove option: " + err.Error())
+			return err
+		}
+		util.Logger.Info("Succeed to remove " + item.OptionPath)
 	}
 
-	//set option value
-	err = ag.Set(item.fullOptionPath, item.OptionValue)
-	if err != nil {
-		util.Logger.Error("Failed to set option path and value: " + err.Error())
-		return err
-	}
-
-	//save to disk
+	//save config file change to disk
 	err = ag.Save()
 	ag.Close()
 	if err != nil {
-		util.Logger.Error("Failed to save augeas config option: " + err.Error())
+		util.Logger.Error("Failed to save change of config file: " + err.Error())
 		return err
 	}
-	util.Logger.Info("Succeed to set " + item.OptionPath + "@" + item.FilePath + " to '" + item.OptionValue + "'")
+	util.Logger.Info("Succeed to save change of config file.")
 	return nil
 }

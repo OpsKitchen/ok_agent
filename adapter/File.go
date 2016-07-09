@@ -21,7 +21,6 @@ type File struct {
 	FileContent string
 	NoTruncate  bool
 	Target      string
-
 	//internal fields, not for json
 	gid, uid  uint32
 	pathExist bool
@@ -53,7 +52,7 @@ func (item *File) Check() error {
 		return errors.New(errMsg)
 	}
 	if item.FileType != file.FileTypeDir && item.FileType != file.FileTypeFile && item.FileType != file.FileTypeLink {
-		errMsg = "Unsupported file type"
+		errMsg = "File type is invalid"
 		util.Logger.Error(errMsg)
 		return errors.New(errMsg)
 	}
@@ -99,7 +98,7 @@ func (item *File) Parse() error {
 	} else {
 		filePerm, err = strconv.ParseUint(item.Permission, 8, 32)
 		if err != nil {
-			util.Logger.Error("Invalid file permission")
+			util.Logger.Error("File permission is invalid")
 			return err
 		}
 		item.perm = os.FileMode(filePerm)
