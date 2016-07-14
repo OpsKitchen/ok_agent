@@ -19,7 +19,7 @@ type Dispatcher struct {
 	BaseConfigFile string
 	Config         *config.Base
 	Credential     *config.Credential
-	DynamicApiList []returndata.DynamicApi
+	EntranceApi    returndata.EntranceApi
 }
 
 func (dispatcher *Dispatcher) Dispatch() {
@@ -105,7 +105,7 @@ func (dispatcher *Dispatcher) prepareDynamicApiList() {
 	util.Logger.Debug("Calling entrance api")
 
 	apiResult, err = dispatcher.ApiClient.CallApi(dispatcher.Config.EntranceApiName,
-		dispatcher.Config.EntranceApiVersion, dispatcher.ApiParam, &dispatcher.DynamicApiList)
+		dispatcher.Config.EntranceApiVersion, dispatcher.ApiParam, &dispatcher.EntranceApi)
 
 	if err != nil {
 		util.Logger.Fatal("Failed to call entrance api.")
@@ -113,7 +113,7 @@ func (dispatcher *Dispatcher) prepareDynamicApiList() {
 	if apiResult.Success == false {
 		util.Logger.Fatal("Entrance api return error: " + apiResult.ErrorCode + "\t" + apiResult.ErrorMessage)
 	}
-	if len(dispatcher.DynamicApiList) == 0 {
+	if len(dispatcher.EntranceApi.ApiList) == 0 {
 		util.Logger.Fatal("Entrance api return empty api list")
 	}
 	util.Logger.Info("Succeed to call entrance api.")
@@ -122,7 +122,7 @@ func (dispatcher *Dispatcher) prepareDynamicApiList() {
 func (dispatcher *Dispatcher) processDynamicApi() {
 	var dynamicApi returndata.DynamicApi
 	var errorCount int
-	for _, dynamicApi = range dispatcher.DynamicApiList {
+	for _, dynamicApi = range dispatcher.EntranceApi.ApiList {
 		util.Logger.Debug("Calling dynamic api: ", dynamicApi.Name)
 		var apiResult *model.ApiResult
 		var err error
