@@ -117,6 +117,9 @@ func (dispatcher *Dispatcher) prepareDynamicApiList() {
 		util.Logger.Fatal("Entrance api return empty api list")
 	}
 	util.Logger.Info("Succeed to call entrance api.")
+	util.Logger.Info("Product version: " + dispatcher.EntranceApi.ProductVersion)
+	util.Logger.Info("Server name: " + dispatcher.EntranceApi.ServerName)
+
 }
 
 func (dispatcher *Dispatcher) processDynamicApi() {
