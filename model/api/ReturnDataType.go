@@ -1,7 +1,7 @@
 package api
 
 const (
-	ReturnDataTypeAugeas  string = "AugeasList"
-	ReturnDataTypeCommand string = "CommandList"
-	ReturnDataTypeFile    string = "FileList"
+	ReturnDataTypeAugeas  string = "[]Augeas"
+	ReturnDataTypeCommand string = "[]Command"
+	ReturnDataTypeFile    string = "[]File"
 )

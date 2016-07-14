@@ -1,7 +1,7 @@
 package returndata
 
 const (
-	AugeasList  string = "AugeasList"
-	CommandList string = "CommandList"
-	FileList    string = "FileList"
+	AugeasList  string = "[]Augeas"
+	CommandList string = "[]Command"
+	FileList    string = "[]File"
 )
