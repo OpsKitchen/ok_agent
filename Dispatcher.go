@@ -32,7 +32,6 @@ func (dispatcher *Dispatcher) Dispatch() {
 }
 
 func (dispatcher *Dispatcher) parseBaseConfig() {
-	var baseConfig *config.Base
 	var err error
 	var jsonBytes []byte
 
@@ -45,17 +44,15 @@ func (dispatcher *Dispatcher) parseBaseConfig() {
 		util.Logger.Fatal("Base config file not readable: ", dispatcher.BaseConfigFile)
 	}
 
-	err = json.Unmarshal(jsonBytes, &baseConfig)
+	err = json.Unmarshal(jsonBytes, &dispatcher.Config)
 	if err != nil {
 		util.Logger.Fatal("Base config file is not a valid json file: " + dispatcher.BaseConfigFile)
 	}
 
-	util.Logger.Info("Runing opskitchen agent " + baseConfig.AgentVersion)
-	dispatcher.Config = baseConfig
+	util.Logger.Info("Runing opskitchen agent " + dispatcher.Config.AgentVersion)
 }
 
 func (dispatcher *Dispatcher) parseCredentialConfig() {
-	var credentialConfig *config.Credential
 	var err error
 	var jsonBytes []byte
 
@@ -68,12 +65,10 @@ func (dispatcher *Dispatcher) parseCredentialConfig() {
 		util.Logger.Fatal("Credential config file not readable: ", dispatcher.Config.CredentialFile)
 	}
 
-	err = json.Unmarshal(jsonBytes, &credentialConfig)
+	err = json.Unmarshal(jsonBytes, &dispatcher.Credential)
 	if err != nil {
 		util.Logger.Fatal("Credential config file is not a valid json file: " + dispatcher.Config.CredentialFile)
 	}
-
-	dispatcher.Credential = credentialConfig
 }
 
 func (dispatcher *Dispatcher) prepareApiClient() {
