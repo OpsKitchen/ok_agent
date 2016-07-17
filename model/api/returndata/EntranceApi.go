@@ -1,7 +1,6 @@
 package returndata
 
 type EntranceApi struct {
-	ProductVersion string
-	ServerName     string
-	ApiList        []DynamicApi
+	WebSocketUrl string
+	DeployApiParams    DynamicApi
 }

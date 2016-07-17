@@ -20,6 +20,7 @@ type Dispatcher struct {
 	Config         *config.Base
 	Credential     *config.Credential
 	EntranceApi    returndata.EntranceApi
+	DeployApi      returndata.DeployApi
 }
 
 func (dispatcher *Dispatcher) Dispatch() {
@@ -27,6 +28,7 @@ func (dispatcher *Dispatcher) Dispatch() {
 	dispatcher.parseCredentialConfig()
 	dispatcher.prepareApiClient()
 	dispatcher.prepareApiParam()
+	dispatcher.prepareEntranceApi()
 	dispatcher.prepareDynamicApiList()
 	dispatcher.processDynamicApi()
 }
@@ -94,7 +96,7 @@ func (dispatcher *Dispatcher) prepareApiParam() {
 		dispatcher.Credential.InstanceId)
 }
 
-func (dispatcher *Dispatcher) prepareDynamicApiList() {
+func (dispatcher *Dispatcher) prepareEntranceApi() {
 	var apiResult *model.ApiResult
 	var err error
 	util.Logger.Debug("Calling entrance api")
@@ -108,19 +110,36 @@ func (dispatcher *Dispatcher) prepareDynamicApiList() {
 	if apiResult.Success == false {
 		util.Logger.Fatal("Entrance api return error: " + apiResult.ErrorCode + "\t" + apiResult.ErrorMessage)
 	}
-	if len(dispatcher.EntranceApi.ApiList) == 0 {
-		util.Logger.Fatal("Entrance api return empty api list")
-	}
 	util.Logger.Info("Succeed to call entrance api.")
-	util.Logger.Info("Product version: " + dispatcher.EntranceApi.ProductVersion)
-	util.Logger.Info("Server name: " + dispatcher.EntranceApi.ServerName)
+}
+
+func (dispatcher *Dispatcher) prepareDynamicApiList() {
+	var apiResult *model.ApiResult
+	var err error
+	util.Logger.Debug("Calling deploy api")
+
+	apiResult, err = dispatcher.ApiClient.CallApi(dispatcher.EntranceApi.DeployApiParams.Name,
+		dispatcher.EntranceApi.DeployApiParams.Version, dispatcher.ApiParam, &dispatcher.DeployApi)
+
+	if err != nil {
+		util.Logger.Fatal("Failed to call deploy api.")
+	}
+	if apiResult.Success == false {
+		util.Logger.Fatal("Deploy api return error: " + apiResult.ErrorCode + "\t" + apiResult.ErrorMessage)
+	}
+	if len(dispatcher.DeployApi.ApiList) == 0 {
+		util.Logger.Fatal("Deploy api return empty api list")
+	}
+	util.Logger.Info("Succeed to call deploy api.")
+	util.Logger.Info("Product version: " + dispatcher.DeployApi.ProductVersion)
+	util.Logger.Info("Server name: " + dispatcher.DeployApi.ServerName)
 
 }
 
 func (dispatcher *Dispatcher) processDynamicApi() {
 	var dynamicApi returndata.DynamicApi
 	var errorCount int
-	for _, dynamicApi = range dispatcher.EntranceApi.ApiList {
+	for _, dynamicApi = range dispatcher.DeployApi.ApiList {
 		util.Logger.Debug("Calling dynamic api: ", dynamicApi.Name)
 		var apiResult *model.ApiResult
 		var err error
