@@ -20,8 +20,7 @@ type Augeas struct {
 
 //***** interface method area *****//
 func (item *Augeas) Brief() string {
-	var brief string
-	brief = "\nFile path: \t" + item.FilePath + "\nLens: \t\t" + item.Lens + "\nOption path: \t" + item.OptionPath
+	brief := "\nFile path: \t" + item.FilePath + "\nLens: \t\t" + item.Lens + "\nOption path: \t" + item.OptionPath
 	if item.OptionValue != "" {
 		brief += "\nOption value: \t" + item.OptionValue
 	}
@@ -32,38 +31,37 @@ func (item *Augeas) Brief() string {
 }
 
 func (item *Augeas) Check() error {
-	var errMsg string
 	//check action
 	if item.Action != "" && item.Action != agadapter.ActionRemove && item.Action != agadapter.ActionSet {
-		errMsg = "Action is invalid"
+		errMsg := "Action is invalid"
 		util.Logger.Error(errMsg)
 		return errors.New(errMsg)
 	}
 
 	//check file path
 	if item.FilePath == "" {
-		errMsg = "Config file path is empty"
+		errMsg := "Config file path is empty"
 		util.Logger.Error(errMsg)
 		return errors.New(errMsg)
 	}
 
 	//check lens
 	if item.Lens == "" {
-		errMsg = "Augeas lens is empty"
+		errMsg := "Augeas lens is empty"
 		util.Logger.Error(errMsg)
 		return errors.New(errMsg)
 	}
 
 	//check option path
 	if item.OptionPath == "" {
-		errMsg = "Config option path is empty"
+		errMsg := "Config option path is empty"
 		util.Logger.Error(errMsg)
 		return errors.New(errMsg)
 	}
 
 	//check option value, empty value are supported in augeas 1.5
 	if item.OptionValue == "" {
-		errMsg = "Config option value is empty"
+		errMsg := "Config option value is empty"
 		util.Logger.Error(errMsg)
 		return errors.New(errMsg)
 	}
@@ -81,24 +79,17 @@ func (item *Augeas) Parse() error {
 }
 
 func (item *Augeas) Process() error {
-	var err error
-	//save Augeas
-	err = item.saveAugeas()
-	if err != nil {
+	if err := item.saveAugeas(); err != nil {
 		return err
 	}
-
 	return nil
 }
 
 //***** interface method area *****//
 
 func (item *Augeas) saveAugeas() error {
-	var ag agsdk.Augeas
-	var err error
-	var oldOptionValue string
 	//new augeas
-	ag, err = agsdk.New("/", "", agsdk.NoLoad)
+	ag, err := agsdk.New("/", "", agsdk.NoLoad)
 	if err != nil {
 		util.Logger.Error("Failed to initialize augeas sdk: " + err.Error())
 		return err
@@ -123,7 +114,7 @@ func (item *Augeas) saveAugeas() error {
 
 	//remove action
 	if item.Action == agadapter.ActionSet { //action = "set"
-		oldOptionValue, err = ag.Get(item.fullOptionPath)
+		oldOptionValue, err := ag.Get(item.fullOptionPath)
 		if err == nil && oldOptionValue == item.OptionValue {
 			util.Logger.Debug("Config option value is correct, skip setting.")
 			return nil

@@ -32,48 +32,34 @@ func (dispatcher *Dispatcher) Dispatch() {
 }
 
 func (dispatcher *Dispatcher) parseBaseConfig() {
-	var err error
-	var jsonBytes []byte
-
 	if util.FileExist(dispatcher.BaseConfigFile) == false {
 		util.Logger.Fatal("Base config file not found: ", dispatcher.BaseConfigFile)
 	}
-
-	jsonBytes, err = ioutil.ReadFile(dispatcher.BaseConfigFile)
+	jsonBytes, err := ioutil.ReadFile(dispatcher.BaseConfigFile)
 	if err != nil {
 		util.Logger.Fatal("Base config file not readable: ", dispatcher.BaseConfigFile)
 	}
-
-	err = json.Unmarshal(jsonBytes, &dispatcher.Config)
-	if err != nil {
+	if err := json.Unmarshal(jsonBytes, &dispatcher.Config); err != nil {
 		util.Logger.Fatal("Base config file is not a valid json file: " + dispatcher.BaseConfigFile)
 	}
-
 	util.Logger.Info("Runing opskitchen agent " + dispatcher.Config.AgentVersion)
 }
 
 func (dispatcher *Dispatcher) parseCredentialConfig() {
-	var err error
-	var jsonBytes []byte
-
 	if util.FileExist(dispatcher.Config.CredentialFile) == false {
 		util.Logger.Fatal("Credential config file not found: ", dispatcher.Config.CredentialFile)
 	}
-
-	jsonBytes, err = ioutil.ReadFile(dispatcher.Config.CredentialFile)
+	jsonBytes, err := ioutil.ReadFile(dispatcher.Config.CredentialFile)
 	if err != nil {
 		util.Logger.Fatal("Credential config file not readable: ", dispatcher.Config.CredentialFile)
 	}
-
-	err = json.Unmarshal(jsonBytes, &dispatcher.Credential)
-	if err != nil {
+	if err := json.Unmarshal(jsonBytes, &dispatcher.Credential); err != nil {
 		util.Logger.Fatal("Credential config file is not a valid json file: " + dispatcher.Config.CredentialFile)
 	}
 }
 
 func (dispatcher *Dispatcher) prepareApiClient() {
-	var client *sdk.Client
-	client = sdk.NewClient()
+	client := sdk.NewClient()
 	//inject logger
 	sdk.SetDefaultLogger(util.ApiLogger)
 
@@ -95,11 +81,9 @@ func (dispatcher *Dispatcher) prepareApiParam() {
 }
 
 func (dispatcher *Dispatcher) prepareDynamicApiList() {
-	var apiResult *model.ApiResult
-	var err error
 	util.Logger.Debug("Calling entrance api")
 
-	apiResult, err = dispatcher.ApiClient.CallApi(dispatcher.Config.EntranceApiName,
+	apiResult, err := dispatcher.ApiClient.CallApi(dispatcher.Config.EntranceApiName,
 		dispatcher.Config.EntranceApiVersion, dispatcher.ApiParam, &dispatcher.EntranceApi)
 
 	if err != nil {
@@ -118,9 +102,8 @@ func (dispatcher *Dispatcher) prepareDynamicApiList() {
 }
 
 func (dispatcher *Dispatcher) processDynamicApi() {
-	var dynamicApi returndata.DynamicApi
 	var errorCount int
-	for _, dynamicApi = range dispatcher.EntranceApi.ApiList {
+	for _, dynamicApi := range dispatcher.EntranceApi.ApiList {
 		util.Logger.Debug("Calling dynamic api: ", dynamicApi.Name)
 		var apiResult *model.ApiResult
 		var err error
