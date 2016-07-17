@@ -102,16 +102,13 @@ func (dispatcher *Dispatcher) prepareDynamicApiList() {
 }
 
 func (dispatcher *Dispatcher) processDynamicApi() {
-	var errorCount int
+	errorCount := 0
 	for _, dynamicApi := range dispatcher.EntranceApi.ApiList {
 		util.Logger.Debug("Calling dynamic api: ", dynamicApi.Name)
-		var apiResult *model.ApiResult
-		var err error
 		var mapItemList []map[string]interface{}
-		var mapItem map[string]interface{}
 
 		//call dynamic api
-		apiResult, err = dispatcher.ApiClient.CallApi(dynamicApi.Name, dynamicApi.Version, dispatcher.ApiParam, &mapItemList)
+		apiResult, err := dispatcher.ApiClient.CallApi(dynamicApi.Name, dynamicApi.Version, dispatcher.ApiParam, &mapItemList)
 		if err != nil {
 			util.Logger.Fatal("Failed to call api: ", dynamicApi.Name, dynamicApi.Version)
 		}
@@ -124,7 +121,7 @@ func (dispatcher *Dispatcher) processDynamicApi() {
 		}
 
 		//cast item list to native go type
-		for _, mapItem = range mapItemList {
+		for _, mapItem := range mapItemList {
 			var item adapter.AdapterInterface
 			switch dynamicApi.ReturnDataType {
 			case returndata.AugeasList:

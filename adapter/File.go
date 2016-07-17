@@ -169,7 +169,7 @@ func (item *File) processDir() error {
 }
 
 func (item *File) processFile() error {
-	var skipWriteContent bool
+	skipWriteContent := false
 	//create new file
 	if item.pathExist == false {
 		if _, err := os.Create(item.FilePath); err != nil {

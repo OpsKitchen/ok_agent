@@ -133,7 +133,7 @@ func (item *Augeas) saveAugeas() error {
 			util.Logger.Debug("Config option does not exists, skip removing.")
 			return nil
 		}
-		var num int = ag.Remove(item.fullOptionPath)
+		num := ag.Remove(item.fullOptionPath)
 		if num == 0 {
 			util.Logger.Error("Failed to remove option: " + err.Error())
 			return err
