@@ -9,15 +9,10 @@ import (
 var DebugAgent bool
 
 func main() {
-	var baseConfigFile *string
-	var debugAgent *bool
-	var debugApi *bool
-	var dispatcher *Dispatcher
-
 	//parse config file from cli argument
-	baseConfigFile = flag.String("c", "/etc/ok_agent.json", "base config file path")
-	debugAgent = flag.Bool("d", false, "enable debug mode")
-	debugApi = flag.Bool("debug-api", false, "enable open api debug log")
+	baseConfigFile := flag.String("c", "/etc/ok_agent.json", "base config file path")
+	debugAgent := flag.Bool("d", false, "enable debug mode")
+	debugApi := flag.Bool("debug-api", false, "enable open api debug log")
 	flag.Parse()
 
 	//enable agent debug mode
@@ -32,7 +27,7 @@ func main() {
 	}
 
 	//dispatch
-	dispatcher = &Dispatcher{
+	dispatcher := &Dispatcher{
 		BaseConfigFile: *baseConfigFile,
 	}
 	dispatcher.Dispatch()

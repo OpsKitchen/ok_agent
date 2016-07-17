@@ -22,8 +22,7 @@ type Command struct {
 
 //***** interface method area *****//
 func (item *Command) Brief() string {
-	var brief string
-	brief = "\nCommand: \t" + item.Command
+	brief := "\nCommand: \t" + item.Command
 	if item.Cwd != "" {
 		brief += "\nCwd: \t\t" + item.Cwd
 	}
@@ -40,26 +39,22 @@ func (item *Command) Brief() string {
 }
 
 func (item *Command) Check() error {
-	var err error
-	var errMsg string
-	var stat os.FileInfo
-
 	//check command
 	if item.Command == "" {
-		errMsg = "Command is empty"
+		errMsg := "Command is empty"
 		util.Logger.Error(errMsg)
 		return errors.New(errMsg)
 	}
 
 	//check cwd
 	if item.Cwd != "" {
-		stat, err = os.Stat(item.Cwd)
+		stat, err := os.Stat(item.Cwd)
 		if err != nil {
-			errMsg = "Cwd does not exist"
+			errMsg := "Cwd does not exist"
 			util.Logger.Error(errMsg)
 			return errors.New(errMsg)
 		} else if stat.IsDir() == false {
-			errMsg = "Cwd is not a directory"
+			errMsg := "Cwd is not a directory"
 			util.Logger.Error(errMsg)
 			return errors.New(errMsg)
 		}
@@ -67,8 +62,7 @@ func (item *Command) Check() error {
 
 	//check user
 	if item.User != "" {
-		_, err = user.Lookup(item.User)
-		if err != nil {
+		if _, err := user.Lookup(item.User); err != nil {
 			util.Logger.Error("User does not exist")
 			return err
 		}
@@ -101,30 +95,22 @@ func (item *Command) Process() error {
 //***** interface method area *****//
 
 func (item *Command) fastRun(line string) bool {
-	var cmd *exec.Cmd
-	var err error
-	cmd = exec.Command(command.DefaultShell, item.User, "-c", line)
+	cmd := exec.Command(command.DefaultShell, item.User, "-c", line)
 	item.setPath(cmd)
-	err = cmd.Run()
+	err := cmd.Run()
 	return err == nil
 }
 
 func (item *Command) runWithMessage() error {
-	var cmd *exec.Cmd
-	var err error
-	var errPipe, outPipe io.ReadCloser
-	var errReader, outReader *bufio.Reader
-	var line string
-
 	//prepare cmd object
-	cmd = exec.Command(command.DefaultShell, item.User, "-c", item.Command)
+	cmd := exec.Command(command.DefaultShell, item.User, "-c", item.Command)
 	item.setCwd(cmd)
 	item.setPath(cmd)
 
-	outPipe, _ = cmd.StdoutPipe()
-	errPipe, _ = cmd.StderrPipe()
-	err = cmd.Start()
-	if err != nil {
+	outPipe, _ := cmd.StdoutPipe()
+	errPipe, _ := cmd.StderrPipe()
+
+	if err := cmd.Start(); err != nil {
 		util.Logger.Error("Can not start default shell: " + command.DefaultShell + "\n" + err.Error())
 		return err
 	} else {
@@ -132,9 +118,9 @@ func (item *Command) runWithMessage() error {
 	}
 
 	//real-time output of std out
-	outReader = bufio.NewReader(outPipe)
+	outReader := bufio.NewReader(outPipe)
 	for {
-		line, err = outReader.ReadString(command.ReadStringDelimiter)
+		line, err := outReader.ReadString(command.ReadStringDelimiter)
 		if err != nil || io.EOF == err {
 			break
 		}
@@ -142,16 +128,16 @@ func (item *Command) runWithMessage() error {
 	}
 
 	//real-time output of std err
-	errReader = bufio.NewReader(errPipe)
+	errReader := bufio.NewReader(errPipe)
 	for {
-		line, err = errReader.ReadString(command.ReadStringDelimiter)
+		line, err := errReader.ReadString(command.ReadStringDelimiter)
 		if err != nil || io.EOF == err {
 			break
 		}
 		util.Logger.Debug(line)
 	}
-	err = cmd.Wait()
-	if err != nil {
+
+	if err := cmd.Wait(); err != nil {
 		util.Logger.Error("Failed to run commnad.")
 		return err
 	} else {
