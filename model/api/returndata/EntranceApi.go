@@ -1,6 +1,6 @@
 package returndata
 
 type EntranceApi struct {
-	WebSocketUrl string
+	WebSocketUrl    string
 	DeployApiParams DynamicApi
 }
