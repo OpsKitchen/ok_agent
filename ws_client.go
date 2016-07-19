@@ -17,7 +17,7 @@ func main() {
 	interrupt := make(chan os.Signal, 1)
 	signal.Notify(interrupt, os.Interrupt)
 
-	c, _, err := websocket.DefaultDialer.Dial("ws://127.0.0.1:8080/ws?token=token", nil)
+	c, _, err := websocket.DefaultDialer.Dial("ws://127.0.0.1:8080/?token=token", nil)
 	if err != nil {
 		log.Fatal("dial:", err)
 	}
