@@ -8,8 +8,13 @@ import (
 	"github.com/OpsKitchen/ok_agent/model/config"
 	"github.com/OpsKitchen/ok_agent/util"
 	"github.com/OpsKitchen/ok_api_sdk_go/sdk"
+	"github.com/OpsKitchen/ok_api_sdk_go/sdk/model"
+	"github.com/gorilla/websocket"
 	"io/ioutil"
+	"log"
 	"os"
+	"os/signal"
+	"time"
 )
 
 type Dispatcher struct {
@@ -28,8 +33,7 @@ func (dispatcher *Dispatcher) Dispatch() {
 	dispatcher.prepareApiClient()
 	dispatcher.prepareApiParam()
 	dispatcher.prepareEntranceApi()
-	dispatcher.prepareDynamicApiList()
-	dispatcher.processDynamicApi()
+	dispatcher.prepareWebSocket()
 }
 
 func (dispatcher *Dispatcher) parseBaseConfig() {
@@ -82,99 +86,183 @@ func (dispatcher *Dispatcher) prepareApiParam() {
 }
 
 func (dispatcher *Dispatcher) prepareEntranceApi() {
-	var err error
 	util.Logger.Debug("Calling entrance api")
 
 	apiResult, err := dispatcher.ApiClient.CallApi(dispatcher.Config.EntranceApiName,
 		dispatcher.Config.EntranceApiVersion, dispatcher.ApiParam, &dispatcher.EntranceApi)
 
 	if err != nil {
-		util.Logger.Fatal("Failed to call entrance api.")
+		util.Logger.Debug("Failed to call entrance api.")
 	}
 	if apiResult.Success == false {
-		util.Logger.Fatal("Entrance api return error: " + apiResult.ErrorCode + "\t" + apiResult.ErrorMessage)
+		util.Logger.Debug("Entrance api return error: " + apiResult.ErrorCode + "\t" + apiResult.ErrorMessage)
 	}
 	util.Logger.Info("Succeed to call entrance api.")
 }
 
-func (dispatcher *Dispatcher) prepareDynamicApiList() {
-	var err error
+func (dispatcher *Dispatcher) prepareWebSocket() {
+	interrupt := make(chan os.Signal, 1)
+	signal.Notify(interrupt, os.Interrupt)
+
+	c, _, err := websocket.DefaultDialer.Dial(dispatcher.EntranceApi.WebSocketUrl, nil)
+	if err != nil {
+		log.Println("dial:", err)
+		// reconnection web socket server
+		dispatcher.prepareWebSocket()
+	}
+	defer c.Close()
+
+	done := make(chan struct{})
+
+	go func() {
+		defer c.Close()
+		defer close(done)
+		for {
+			_, message, err := c.ReadMessage()
+			if err != nil {
+				log.Println("read:", err)
+				// reconnection web socket server
+				//dispatcher.Dispatch()
+			}
+
+			log.Printf("recv: %s", message)
+			//dispatcher.prepareDeploy()
+		}
+	}()
+
+	ticker := time.NewTicker(time.Second)
+	defer ticker.Stop()
+
+	for {
+		select {
+		case <-interrupt:
+			log.Println("interrupt")
+			// To cleanly close a connection, a client should send a close
+			// frame and wait for the server to close the connection.
+			err := c.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, ""))
+			if err != nil {
+				log.Println("write close:", err)
+				return
+			}
+			select {
+			case <-done:
+			case <-time.After(time.Second):
+			}
+			c.Close()
+			return
+		}
+	}
+}
+
+func (dispatcher *Dispatcher) prepareDeploy() {
+	util.Logger.Debug("Calling deploy server")
+	apiListResult := dispatcher.prepareDynamicApiList()
+	if apiListResult.Success {
+		for _, dynamicApi := range dispatcher.DeployApi.ApiList {
+			apiResult := dispatcher.processDynamicApi(dynamicApi)
+			if !apiResult.Success {
+				util.Logger.Debug(apiResult.ErrorMessage)
+				return
+			}
+		}
+		util.Logger.Info("Congratulations! All tasks have been done successfully!")
+	} else {
+		util.Logger.Debug(apiListResult.ErrorMessage)
+	}
+}
+
+func (dispatcher *Dispatcher) prepareDynamicApiList() *model.ApiResult {
 	util.Logger.Debug("Calling deploy api")
+	var apiResult *model.ApiResult
 
 	apiResult, err := dispatcher.ApiClient.CallApi(dispatcher.EntranceApi.DeployApiParams.Name,
 		dispatcher.EntranceApi.DeployApiParams.Version, dispatcher.ApiParam, &dispatcher.DeployApi)
 
 	if err != nil {
-		util.Logger.Fatal("Failed to call deploy api.")
+		errorMessage := "Failed to call deploy api."
+		util.Logger.Debug(errorMessage)
+		apiResult.Success = false
+		apiResult.ErrorMessage = errorMessage
+		return apiResult
 	}
 	if apiResult.Success == false {
-		util.Logger.Fatal("Deploy api return error: " + apiResult.ErrorCode + "\t" + apiResult.ErrorMessage)
+		util.Logger.Debug("Deploy api return error: " + apiResult.ErrorCode + "\t" + apiResult.ErrorMessage)
+		return apiResult
 	}
 	if len(dispatcher.DeployApi.ApiList) == 0 {
-		util.Logger.Fatal("Deploy api return empty api list")
+		errorMessage := "Deploy api return empty api list."
+		util.Logger.Debug(errorMessage)
+		apiResult.Success = false
+		apiResult.ErrorMessage = errorMessage
+		return apiResult
 	}
 	util.Logger.Info("Succeed to call deploy api.")
 	util.Logger.Info("Product version: " + dispatcher.DeployApi.ProductVersion)
 	util.Logger.Info("Server name: " + dispatcher.DeployApi.ServerName)
-
+	apiResult.Data = nil
+	return apiResult
 }
 
-func (dispatcher *Dispatcher) processDynamicApi() {
-	errorCount := 0
-	for _, dynamicApi := range dispatcher.DeployApi.ApiList {
-		util.Logger.Debug("Calling dynamic api: ", dynamicApi.Name)
-		var mapItemList []map[string]interface{}
+func (dispatcher *Dispatcher) processDynamicApi(dynamicApi returndata.DynamicApi) *model.ApiResult {
+	util.Logger.Debug("Calling dynamic api: ", dynamicApi.Name)
+	var mapItemList []map[string]interface{}
 
-		//call dynamic api
-		apiResult, err := dispatcher.ApiClient.CallApi(dynamicApi.Name, dynamicApi.Version, dispatcher.ApiParam, &mapItemList)
-		if err != nil {
-			util.Logger.Fatal("Failed to call api: ", dynamicApi.Name, dynamicApi.Version)
-		}
-		if apiResult.Success == false {
-			util.Logger.Fatal("Api return error: ", apiResult.ErrorCode, apiResult.ErrorMessage)
-		}
-		if apiResult.Data == nil {
-			util.Logger.Debug("Api returns empty data, nothing to do, go to next api")
-			continue
-		}
-
-		//cast item list to native go type
-		for _, mapItem := range mapItemList {
-			var item adapter.AdapterInterface
-			switch dynamicApi.ReturnDataType {
-			case returndata.AugeasList:
-				item = &adapter.Augeas{}
-
-			case returndata.CommandList:
-				item = &adapter.Command{}
-
-			case returndata.FileList:
-				item = &adapter.File{}
-
-			default:
-				util.Logger.Fatal("Unsupported list: ", dynamicApi.ReturnDataType)
-			}
-
-			//data type casting with json
-			err = util.JsonConvert(mapItem, &item)
-			if err != nil {
-				util.Logger.Fatal("Failed to convert item data type")
-			}
-			util.Logger.Info("Processing..." + item.Brief())
-			if item.Check() == nil && item.Parse() == nil && item.Process() == nil {
-				continue
-			}
-
-			errorCount++
-			if DebugAgent == true {
-				os.Exit(1)
-			}
-		} //end for "range apiResultData"
-	} //end for "range dispatcher.DynamicApiList"
-
-	if errorCount > 0 {
-		util.Logger.Fatal(errorCount, " error(s) occourred, run me with '-d' option to see more detail")
-	} else {
-		util.Logger.Info("Congratulations! All tasks have been done successfully!")
+	//call dynamic api
+	apiResult, err := dispatcher.ApiClient.CallApi(dynamicApi.Name, dynamicApi.Version, dispatcher.ApiParam, &mapItemList)
+	if err != nil {
+		util.Logger.Debug("Failed to call api: ", dynamicApi.Name, dynamicApi.Version)
+		apiResult.Success = false
+		apiResult.ErrorMessage = "Failed to call api: " + dynamicApi.Name + dynamicApi.Version
+		return apiResult
 	}
+	if apiResult.Success == false {
+		util.Logger.Debug("Api return error: ", apiResult.ErrorCode, apiResult.ErrorMessage)
+		return apiResult
+	}
+	if apiResult.Data == nil {
+		util.Logger.Debug("Api returns empty data, nothing to do, go to next api")
+		return apiResult
+	}
+
+	//cast item list to native go type
+	for _, mapItem := range mapItemList {
+		var item adapter.AdapterInterface
+		switch dynamicApi.ReturnDataType {
+		case returndata.AugeasList:
+			item = &adapter.Augeas{}
+
+		case returndata.CommandList:
+			item = &adapter.Command{}
+
+		case returndata.FileList:
+			item = &adapter.File{}
+
+		default:
+			util.Logger.Debug("Unsupported list: ", dynamicApi.ReturnDataType)
+			apiResult.Success = false
+			apiResult.ErrorMessage = "Unsupported list: " + dynamicApi.ReturnDataType
+			return apiResult
+		}
+
+		//data type casting with json
+		err = util.JsonConvert(mapItem, &item)
+		if err != nil {
+			errorMessage := "Failed to convert item data type"
+			util.Logger.Debug(errorMessage)
+			apiResult.Success = false
+			apiResult.ErrorMessage = "Unsupported list: " + dynamicApi.ReturnDataType
+			return apiResult
+		}
+		util.Logger.Info("Processing..." + item.Brief())
+		if item.Check() == nil && item.Parse() == nil && item.Process() == nil {
+			continue
+		} else {
+			apiResult.Success = false
+			apiResult.ErrorMessage = "Failed to adapter exec."
+			return apiResult
+		}
+	} //end for "range apiResultData"
+
+	apiResult.Data = nil
+	return apiResult
 }
