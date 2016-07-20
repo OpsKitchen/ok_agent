@@ -101,32 +101,28 @@ func (dispatcher *Dispatcher) prepareEntranceApi() {
 }
 
 func (dispatcher *Dispatcher) prepareWebSocket() {
+	var conn *websocket.Conn
 	interrupt := make(chan os.Signal, 1)
 	signal.Notify(interrupt, os.Interrupt)
 
-	c, _, err := websocket.DefaultDialer.Dial(dispatcher.EntranceApi.WebSocketUrl, nil)
-	if err != nil {
-		log.Println("dial:", err)
-		// reconnection web socket server
-		dispatcher.prepareWebSocket()
-	}
-	defer c.Close()
+	conn = dispatcher.connWebSocket()
+	defer conn.Close()
 
 	done := make(chan struct{})
 
 	go func() {
-		defer c.Close()
+		defer conn.Close()
 		defer close(done)
 		for {
-			_, message, err := c.ReadMessage()
+			_, message, err := conn.ReadMessage()
 			if err != nil {
 				log.Println("read:", err)
-				// reconnection web socket server
-				//dispatcher.Dispatch()
+				conn = dispatcher.connWebSocket()
+				continue
 			}
 
 			log.Printf("recv: %s", message)
-			//dispatcher.prepareDeploy()
+			dispatcher.prepareDeploy()
 		}
 	}()
 
@@ -139,7 +135,7 @@ func (dispatcher *Dispatcher) prepareWebSocket() {
 			log.Println("interrupt")
 			// To cleanly close a connection, a client should send a close
 			// frame and wait for the server to close the connection.
-			err := c.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, ""))
+			err := conn.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, ""))
 			if err != nil {
 				log.Println("write close:", err)
 				return
@@ -148,9 +144,22 @@ func (dispatcher *Dispatcher) prepareWebSocket() {
 			case <-done:
 			case <-time.After(time.Second):
 			}
-			c.Close()
+			conn.Close()
 			return
 		}
+	}
+}
+
+func (dispatcher *Dispatcher) connWebSocket() *websocket.Conn {
+	for {
+		c, _, err := websocket.DefaultDialer.Dial(dispatcher.EntranceApi.WebSocketUrl, nil)
+		if err != nil {
+			log.Println("dial:", err)
+			time.Sleep(5 * time.Second)
+			dispatcher.prepareEntranceApi()
+			continue
+		}
+		return c
 	}
 }
 
