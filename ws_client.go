@@ -31,7 +31,12 @@ func main() {
 		for {
 			_, message, err := c.ReadMessage()
 			if err != nil {
-				log.Println("read:", err)
+				if websocket.IsUnexpectedCloseError(err, websocket.CloseNormalClosure) {
+					log.Println("server exit abnormally: " + err.Error())
+				} else {
+					//server sent 1000 error code (websocket.CloseNormalClosure)
+					log.Println("server sends me close frame:", err)
+				}
 				return
 			}
 			log.Printf("recv: %s", message)
@@ -61,3 +66,6 @@ func main() {
 		}
 	}
 }
+
+
+//UPDATE `ops`.`ws_connection` SET `ip` = '127.0.0.1', token='token' WHERE `ws_connection`.`id` = 9;
