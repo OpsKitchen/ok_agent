@@ -7,14 +7,15 @@ import (
 	"github.com/OpsKitchen/ok_agent/model/api/returndata"
 	"github.com/OpsKitchen/ok_agent/model/config"
 	"github.com/OpsKitchen/ok_agent/util"
+	"github.com/OpsKitchen/ok_agent/wsclient"
 	"github.com/OpsKitchen/ok_api_sdk_go/sdk"
 	"github.com/OpsKitchen/ok_api_sdk_go/sdk/model"
 	"github.com/gorilla/websocket"
 	"io/ioutil"
-	"log"
 	"os"
 	"os/signal"
 	"time"
+	"unsafe"
 )
 
 type Dispatcher struct {
@@ -32,8 +33,8 @@ func (dispatcher *Dispatcher) Dispatch() {
 	dispatcher.parseCredentialConfig()
 	dispatcher.prepareApiClient()
 	dispatcher.prepareApiParam()
-	dispatcher.prepareEntranceApi()
-	dispatcher.prepareWebSocket()
+	dispatcher.processEntranceApi()
+	dispatcher.processWebSocket()
 }
 
 func (dispatcher *Dispatcher) parseBaseConfig() {
@@ -85,7 +86,7 @@ func (dispatcher *Dispatcher) prepareApiParam() {
 		dispatcher.Credential.InstanceId)
 }
 
-func (dispatcher *Dispatcher) prepareEntranceApi() {
+func (dispatcher *Dispatcher) processEntranceApi() {
 	util.Logger.Debug("Calling entrance api")
 
 	apiResult, err := dispatcher.ApiClient.CallApi(dispatcher.Config.EntranceApiName,
@@ -93,14 +94,38 @@ func (dispatcher *Dispatcher) prepareEntranceApi() {
 
 	if err != nil {
 		util.Logger.Debug("Failed to call entrance api.")
+		return
 	}
 	if apiResult.Success == false {
 		util.Logger.Debug("Entrance api return error: " + apiResult.ErrorCode + "\t" + apiResult.ErrorMessage)
+		return
 	}
 	util.Logger.Info("Succeed to call entrance api.")
+
+	if dispatcher.EntranceApi.ReportInstance {
+		util.Logger.Debug("Calling report instance api")
+		var reportInstanceParam = api.ReportInstanceParam{}
+		var returnDataPointer interface{}
+		reportInstanceParam.SetServerUniqueName(dispatcher.Credential.ServerUniqueName).SetInstanceId(
+			dispatcher.Credential.InstanceId).SetMachineType(string("virtual")).SetCpu(
+			int(1)).SetMemory(int(1024))
+
+		reportResult, err := dispatcher.ApiClient.CallApi(dispatcher.EntranceApi.ReportInstanceApiParams.Name,
+			dispatcher.EntranceApi.ReportInstanceApiParams.Version, reportInstanceParam, returnDataPointer)
+		if err != nil {
+			util.Logger.Debug("Failed to call report instance api: ", dispatcher.EntranceApi.ReportInstanceApiParams.Name,
+				dispatcher.EntranceApi.ReportInstanceApiParams.Version)
+			return
+		}
+		if reportResult.Success == false {
+			util.Logger.Debug("Api return error: ", reportResult.ErrorCode, reportResult.ErrorMessage)
+			return
+		}
+		util.Logger.Info("Succeed to call report instance api.")
+	}
 }
 
-func (dispatcher *Dispatcher) prepareWebSocket() {
+func (dispatcher *Dispatcher) processWebSocket() {
 	var conn *websocket.Conn
 	interrupt := make(chan os.Signal, 1)
 	signal.Notify(interrupt, os.Interrupt)
@@ -116,13 +141,24 @@ func (dispatcher *Dispatcher) prepareWebSocket() {
 		for {
 			_, message, err := conn.ReadMessage()
 			if err != nil {
-				log.Println("read:", err)
+				util.Logger.Error("read:", err)
 				conn = dispatcher.connWebSocket()
 				continue
 			}
 
-			log.Printf("recv: %s", message)
-			dispatcher.prepareDeploy()
+			msg := *(*string)(unsafe.Pointer(&message))
+			util.Logger.Debug("recv:", msg)
+
+			switch msg {
+			case wsclient.TaskFlagDeploy:
+				dispatcher.prepareDeploy()
+
+			case wsclient.TaskFlagUpgrade:
+				//update agent version
+
+			default:
+				util.Logger.Error("Unsupported msg: ", msg)
+			}
 		}
 	}()
 
@@ -132,12 +168,12 @@ func (dispatcher *Dispatcher) prepareWebSocket() {
 	for {
 		select {
 		case <-interrupt:
-			log.Println("interrupt")
+			util.Logger.Debug("interrupt")
 			// To cleanly close a connection, a client should send a close
 			// frame and wait for the server to close the connection.
 			err := conn.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, ""))
 			if err != nil {
-				log.Println("write close:", err)
+				util.Logger.Error("write close:", err)
 				return
 			}
 			select {
@@ -154,9 +190,9 @@ func (dispatcher *Dispatcher) connWebSocket() *websocket.Conn {
 	for {
 		c, _, err := websocket.DefaultDialer.Dial(dispatcher.EntranceApi.WebSocketUrl, nil)
 		if err != nil {
-			log.Println("dial:", err)
+			util.Logger.Error("dial:", err)
 			time.Sleep(5 * time.Second)
-			dispatcher.prepareEntranceApi()
+			dispatcher.processEntranceApi()
 			continue
 		}
 		return c
@@ -164,6 +200,10 @@ func (dispatcher *Dispatcher) connWebSocket() *websocket.Conn {
 }
 
 func (dispatcher *Dispatcher) prepareDeploy() {
+	var reportResultParam = api.ReportResultParam{}
+	var returnDataPointer interface{}
+	reportResultParam.SetServerUniqueName(dispatcher.Credential.ServerUniqueName).SetInstanceId(
+		dispatcher.Credential.InstanceId)
 	util.Logger.Debug("Calling deploy server")
 	apiListResult := dispatcher.prepareDynamicApiList()
 	if apiListResult.Success {
@@ -171,12 +211,36 @@ func (dispatcher *Dispatcher) prepareDeploy() {
 			apiResult := dispatcher.processDynamicApi(dynamicApi)
 			if !apiResult.Success {
 				util.Logger.Debug(apiResult.ErrorMessage)
+				util.Logger.Debug("Calling report result api")
+				reportResultParam.SetSuccess(apiResult.Success).SetErrorMessage(apiResult.ErrorMessage)
+
+				reportResult, err := dispatcher.ApiClient.CallApi(dispatcher.EntranceApi.ReportResultApiParams.Name,
+					dispatcher.EntranceApi.ReportResultApiParams.Version, reportResultParam, returnDataPointer)
+				if err != nil {
+					util.Logger.Debug("Failed to call report result api: ", dispatcher.EntranceApi.ReportResultApiParams.Name,
+						dispatcher.EntranceApi.ReportResultApiParams.Version)
+				}
+				if reportResult.Success == false {
+					util.Logger.Debug("Api return error: ", reportResult.ErrorCode, reportResult.ErrorMessage)
+				}
 				return
 			}
 		}
 		util.Logger.Info("Congratulations! All tasks have been done successfully!")
 	} else {
 		util.Logger.Debug(apiListResult.ErrorMessage)
+	}
+	util.Logger.Debug("Calling deploy server")
+	reportResultParam.SetSuccess(apiListResult.Success).SetErrorMessage(apiListResult.ErrorMessage)
+
+	reportResult, err := dispatcher.ApiClient.CallApi(dispatcher.EntranceApi.ReportResultApiParams.Name,
+		dispatcher.EntranceApi.ReportResultApiParams.Version, reportResultParam, returnDataPointer)
+	if err != nil {
+		util.Logger.Debug("Failed to call report result api: ", dispatcher.EntranceApi.ReportResultApiParams.Name,
+			dispatcher.EntranceApi.ReportResultApiParams.Version)
+	}
+	if reportResult.Success == false {
+		util.Logger.Debug("Api return error: ", reportResult.ErrorCode, reportResult.ErrorMessage)
 	}
 }
 
@@ -271,6 +335,7 @@ func (dispatcher *Dispatcher) processDynamicApi(dynamicApi returndata.DynamicApi
 			return apiResult
 		}
 	} //end for "range apiResultData"
+	util.Logger.Info("Succeed to call dynamic api: ", dynamicApi.Name)
 
 	apiResult.Data = nil
 	return apiResult

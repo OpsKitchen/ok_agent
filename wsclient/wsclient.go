@@ -1,6 +1,6 @@
 package wsclient
 
 const (
-	TaskFlagDeploy = "d"
+	TaskFlagDeploy  = "d"
 	TaskFlagUpgrade = "u"
 )
