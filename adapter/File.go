@@ -2,7 +2,6 @@ package adapter
 
 import (
 	"errors"
-	"github.com/OpsKitchen/ok_agent/adapter/file"
 	"github.com/OpsKitchen/ok_agent/util"
 	"io/ioutil"
 	"os"
@@ -10,6 +9,18 @@ import (
 	"path/filepath"
 	"strconv"
 	"syscall"
+)
+
+const (
+	FileTypeDir  = "dir"
+	FileTypeFile = "file"
+	FileTypeLink = "link"
+
+	FilePathRoot = "/"
+
+	DefaultPermDir  = 0755
+	DefaultPermFile = 0644
+	DefaultPermLink = 0777
 )
 
 type File struct {
@@ -49,7 +60,7 @@ func (item *File) Check() error {
 		util.Logger.Error(errMsg)
 		return errors.New(errMsg)
 	}
-	if item.FileType != file.FileTypeDir && item.FileType != file.FileTypeFile && item.FileType != file.FileTypeLink {
+	if item.FileType != FileTypeDir && item.FileType != FileTypeFile && item.FileType != FileTypeLink {
 		errMsg := "File type is invalid"
 		util.Logger.Error(errMsg)
 		return errors.New(errMsg)
@@ -61,14 +72,14 @@ func (item *File) Check() error {
 		util.Logger.Error(errMsg)
 		return errors.New(errMsg)
 	}
-	if item.FilePath == file.FilePathRoot {
+	if item.FilePath == FilePathRoot {
 		errMsg := "File path is root"
 		util.Logger.Error(errMsg)
 		return errors.New(errMsg)
 	}
 
 	//check symbol link target
-	if item.FileType == file.FileTypeLink && item.Target == "" {
+	if item.FileType == FileTypeLink && item.Target == "" {
 		errMsg := "Symbol link target is empty"
 		util.Logger.Error(errMsg)
 	}
@@ -80,12 +91,12 @@ func (item *File) Parse() error {
 	//convert string permission to os.FileMode
 	if item.Permission == "" {
 		switch item.FileType {
-		case file.FileTypeDir:
-			item.perm = os.FileMode(file.DefaultPermDir)
-		case file.FileTypeFile:
-			item.perm = os.FileMode(file.DefaultPermFile)
-		case file.FileTypeLink:
-			item.perm = os.FileMode(file.DefaultPermLink)
+		case FileTypeDir:
+			item.perm = os.FileMode(DefaultPermDir)
+		case FileTypeFile:
+			item.perm = os.FileMode(DefaultPermFile)
+		case FileTypeLink:
+			item.perm = os.FileMode(DefaultPermLink)
 		}
 	} else {
 		filePerm, err := strconv.ParseUint(item.Permission, 8, 32)
@@ -130,11 +141,11 @@ func (item *File) Process() error {
 	}
 
 	switch item.FileType {
-	case file.FileTypeDir:
+	case FileTypeDir:
 		return item.processDir()
-	case file.FileTypeFile:
+	case FileTypeFile:
 		return item.processFile()
-	case file.FileTypeLink:
+	case FileTypeLink:
 		return item.processLink()
 	}
 	return nil
@@ -176,7 +187,7 @@ func (item *File) processFile() error {
 			util.Logger.Error("Failed to create file: " + err.Error())
 			return err
 		}
-		util.Logger.Info("Succeed to create file.")
+		util.Logger.Info("Succeed to create ")
 		skipWriteContent = item.FileContent == ""
 	} else {
 		util.Logger.Debug("File already exists, skip creating.")
@@ -275,19 +286,19 @@ func (item *File) checkFilePathExistence() error {
 	}
 
 	switch item.FileType {
-	case file.FileTypeDir:
+	case FileTypeDir:
 		if stat.Mode().IsDir() == false {
 			errMsg := "Path name already exists, but is not a directory"
 			util.Logger.Error(errMsg)
 			return errors.New(errMsg)
 		}
-	case file.FileTypeFile:
+	case FileTypeFile:
 		if stat.Mode().IsRegular() == false {
 			errMsg := "Path name already exists, but is not a regular file"
 			util.Logger.Error(errMsg)
 			return errors.New(errMsg)
 		}
-	case file.FileTypeLink:
+	case FileTypeLink:
 		if stat.Mode()&os.ModeSymlink == 0 { // is not symbol link
 			errMsg := "Path name already exists, but is not a symbol link"
 			util.Logger.Error(errMsg)

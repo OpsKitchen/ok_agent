@@ -2,9 +2,18 @@ package adapter
 
 import (
 	"errors"
-	agadapter "github.com/OpsKitchen/ok_agent/adapter/augeas"
 	"github.com/OpsKitchen/ok_agent/util"
-	agsdk "honnef.co/go/augeas"
+	"honnef.co/go/augeas"
+)
+
+const (
+	ActionRemove = "rm"
+	ActionSet    = "set"
+	ContextRoot  = "/files"
+	LoadPath     = "/augeas/load/"
+	LoadPathIncl = "/incl"
+	LoadPathLens = "/lens"
+	LensSuffix   = ".lns"
 )
 
 type Augeas struct {
@@ -32,7 +41,7 @@ func (item *Augeas) Brief() string {
 
 func (item *Augeas) Check() error {
 	//check action
-	if item.Action != "" && item.Action != agadapter.ActionRemove && item.Action != agadapter.ActionSet {
+	if item.Action != "" && item.Action != ActionRemove && item.Action != ActionSet {
 		errMsg := "Action is invalid"
 		util.Logger.Error(errMsg)
 		return errors.New(errMsg)
@@ -71,10 +80,10 @@ func (item *Augeas) Check() error {
 
 func (item *Augeas) Parse() error {
 	if item.Action == "" {
-		item.Action = agadapter.ActionSet
+		item.Action = ActionSet
 	}
-	item.fullOptionPath = agadapter.ContextRoot + item.FilePath + "/" + item.OptionPath
-	item.lensFile = item.Lens + agadapter.LensSuffix
+	item.fullOptionPath = ContextRoot + item.FilePath + "/" + item.OptionPath
+	item.lensFile = item.Lens + LensSuffix
 	return nil
 }
 
@@ -89,19 +98,19 @@ func (item *Augeas) Process() error {
 
 func (item *Augeas) saveAugeas() error {
 	//new augeas
-	ag, err := agsdk.New("/", "", agsdk.NoLoad)
+	ag, err := augeas.New("/", "", augeas.NoLoad)
 	if err != nil {
 		util.Logger.Error("Failed to initialize augeas sdk: " + err.Error())
 		return err
 	}
 
 	//set /augeas/load/lens and /augeas/load/incl
-	err = ag.Set(agadapter.LoadPath+item.Lens+agadapter.LoadPathLens, item.lensFile)
+	err = ag.Set(LoadPath+item.Lens+LoadPathLens, item.lensFile)
 	if err != nil {
 		util.Logger.Error("Failed to set lens: " + err.Error())
 		return err
 	}
-	err = ag.Set(agadapter.LoadPath+item.Lens+agadapter.LoadPathIncl, item.FilePath)
+	err = ag.Set(LoadPath+item.Lens+LoadPathIncl, item.FilePath)
 	if err != nil {
 		util.Logger.Error("Failed to set incl: " + err.Error())
 		return err
@@ -113,7 +122,7 @@ func (item *Augeas) saveAugeas() error {
 	}
 
 	//remove action
-	if item.Action == agadapter.ActionSet { //action = "set"
+	if item.Action == ActionSet { //action = "set"
 		oldOptionValue, err := ag.Get(item.fullOptionPath)
 		if err == nil && oldOptionValue == item.OptionValue {
 			util.Logger.Debug("Config option value is correct, skip setting.")
@@ -127,7 +136,7 @@ func (item *Augeas) saveAugeas() error {
 			return err
 		}
 		util.Logger.Info("Succeed to set " + item.OptionPath + "@" + item.FilePath + " to '" + item.OptionValue + "'")
-	} else if item.Action == agadapter.ActionRemove { //action = "rm"
+	} else if item.Action == ActionRemove { //action = "rm"
 		_, err = ag.Get(item.fullOptionPath)
 		if err != nil {
 			util.Logger.Debug("Config option does not exists, skip removing.")

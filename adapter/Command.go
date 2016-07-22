@@ -3,12 +3,18 @@ package adapter
 import (
 	"bufio"
 	"errors"
-	"github.com/OpsKitchen/ok_agent/adapter/command"
 	"github.com/OpsKitchen/ok_agent/util"
 	"io"
 	"os"
 	"os/exec"
 	"os/user"
+)
+
+const (
+	EnvKeyPath          = "PATH"
+	DefaultShell        = "/sbin/runuser"
+	DefaultUser         = "root"
+	ReadStringDelimiter = '\n'
 )
 
 type Command struct {
@@ -72,7 +78,7 @@ func (item *Command) Check() error {
 
 func (item *Command) Parse() error {
 	if item.User == "" {
-		item.User = command.DefaultUser
+		item.User = DefaultUser
 	}
 	return nil
 }
@@ -80,11 +86,11 @@ func (item *Command) Parse() error {
 func (item *Command) Process() error {
 	//check if necessary to run command
 	if item.RunIf != "" && item.fastRun(item.RunIf) == false {
-		util.Logger.Debug("'RunIf' retunrs false, skip running command.")
+		util.Logger.Debug("'RunIf' retunrs false, skip running ")
 		return nil
 	}
 	if item.NotRunIf != "" && item.fastRun(item.NotRunIf) == true {
-		util.Logger.Debug("'NotRunIf' returns true, skip running command.")
+		util.Logger.Debug("'NotRunIf' returns true, skip running ")
 		return nil
 	}
 
@@ -95,7 +101,7 @@ func (item *Command) Process() error {
 //***** interface method area *****//
 
 func (item *Command) fastRun(line string) bool {
-	cmd := exec.Command(command.DefaultShell, item.User, "-c", line)
+	cmd := exec.Command(DefaultShell, item.User, "-c", line)
 	item.setPath(cmd)
 	err := cmd.Run()
 	return err == nil
@@ -103,7 +109,7 @@ func (item *Command) fastRun(line string) bool {
 
 func (item *Command) runWithMessage() error {
 	//prepare cmd object
-	cmd := exec.Command(command.DefaultShell, item.User, "-c", item.Command)
+	cmd := exec.Command(DefaultShell, item.User, "-c", item.Command)
 	item.setCwd(cmd)
 	item.setPath(cmd)
 
@@ -111,16 +117,16 @@ func (item *Command) runWithMessage() error {
 	errPipe, _ := cmd.StderrPipe()
 
 	if err := cmd.Start(); err != nil {
-		util.Logger.Error("Can not start default shell: " + command.DefaultShell + "\n" + err.Error())
+		util.Logger.Error("Can not start default shell: " + DefaultShell + "\n" + err.Error())
 		return err
 	} else {
-		util.Logger.Info("Running command...")
+		util.Logger.Info("Running ..")
 	}
 
 	//real-time output of std out
 	outReader := bufio.NewReader(outPipe)
 	for {
-		line, err := outReader.ReadString(command.ReadStringDelimiter)
+		line, err := outReader.ReadString(ReadStringDelimiter)
 		if err != nil || io.EOF == err {
 			break
 		}
@@ -130,7 +136,7 @@ func (item *Command) runWithMessage() error {
 	//real-time output of std err
 	errReader := bufio.NewReader(errPipe)
 	for {
-		line, err := errReader.ReadString(command.ReadStringDelimiter)
+		line, err := errReader.ReadString(ReadStringDelimiter)
 		if err != nil || io.EOF == err {
 			break
 		}
@@ -154,8 +160,8 @@ func (item *Command) setCwd(cmd *exec.Cmd) {
 
 func (item *Command) setPath(cmd *exec.Cmd) {
 	if item.Path != "" {
-		cmd.Env = append(cmd.Env, command.EnvKeyPath+"="+item.Path)
+		cmd.Env = append(cmd.Env, EnvKeyPath+"="+item.Path)
 	} else {
-		cmd.Env = append(cmd.Env, command.EnvKeyPath+"="+os.Getenv(command.EnvKeyPath))
+		cmd.Env = append(cmd.Env, EnvKeyPath+"="+os.Getenv(EnvKeyPath))
 	}
 }
