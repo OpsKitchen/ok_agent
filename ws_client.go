@@ -12,7 +12,7 @@ import (
 	"time"
 )
 
-func main() {
+func main1() {
 
 	interrupt := make(chan os.Signal, 1)
 	signal.Notify(interrupt, os.Interrupt)
@@ -66,6 +66,5 @@ func main() {
 		}
 	}
 }
-
 
 //UPDATE `ops`.`ws_connection` SET `ip` = '127.0.0.1', token='token' WHERE `ws_connection`.`id` = 9;

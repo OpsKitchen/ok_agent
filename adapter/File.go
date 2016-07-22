@@ -56,31 +56,31 @@ func (item *File) Brief() string {
 func (item *File) Check() error {
 	//check file type
 	if item.FileType == "" {
-		errMsg := "File type is empty"
+		errMsg := "adapter: file type is empty"
 		util.Logger.Error(errMsg)
 		return errors.New(errMsg)
 	}
 	if item.FileType != FileTypeDir && item.FileType != FileTypeFile && item.FileType != FileTypeLink {
-		errMsg := "File type is invalid"
+		errMsg := "adapter: file type is invalid"
 		util.Logger.Error(errMsg)
 		return errors.New(errMsg)
 	}
 
 	//check file path
 	if item.FilePath == "" {
-		errMsg := "File path is empty"
+		errMsg := "adapter: file path is empty"
 		util.Logger.Error(errMsg)
 		return errors.New(errMsg)
 	}
 	if item.FilePath == FilePathRoot {
-		errMsg := "File path is root"
+		errMsg := "adapter: file path is root"
 		util.Logger.Error(errMsg)
 		return errors.New(errMsg)
 	}
 
 	//check symbol link target
 	if item.FileType == FileTypeLink && item.Target == "" {
-		errMsg := "Symbol link target is empty"
+		errMsg := "adapter: symbol link target is empty"
 		util.Logger.Error(errMsg)
 	}
 
@@ -288,19 +288,19 @@ func (item *File) checkFilePathExistence() error {
 	switch item.FileType {
 	case FileTypeDir:
 		if stat.Mode().IsDir() == false {
-			errMsg := "Path name already exists, but is not a directory"
+			errMsg := "adapter: path name already exists, but is not a directory"
 			util.Logger.Error(errMsg)
 			return errors.New(errMsg)
 		}
 	case FileTypeFile:
 		if stat.Mode().IsRegular() == false {
-			errMsg := "Path name already exists, but is not a regular file"
+			errMsg := "adapter: path name already exists, but is not a regular file"
 			util.Logger.Error(errMsg)
 			return errors.New(errMsg)
 		}
 	case FileTypeLink:
 		if stat.Mode()&os.ModeSymlink == 0 { // is not symbol link
-			errMsg := "Path name already exists, but is not a symbol link"
+			errMsg := "adapter: path name already exists, but is not a symbol link"
 			util.Logger.Error(errMsg)
 			return errors.New(errMsg)
 		}
@@ -314,7 +314,7 @@ func (item *File) createParentDir() error {
 	stat, err := os.Stat(parentDir)
 	if err == nil { //path exist
 		if stat.Mode().IsDir() == false {
-			errMsg := "Parent directory name already exists, but is not a directory: " + parentDir
+			errMsg := "adapter: parent directory name already exists, but is not a directory: " + parentDir
 			util.Logger.Error(errMsg)
 			return errors.New(errMsg)
 		}

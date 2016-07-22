@@ -47,7 +47,7 @@ func (item *Command) Brief() string {
 func (item *Command) Check() error {
 	//check command
 	if item.Command == "" {
-		errMsg := "Command is empty"
+		errMsg := "adapter: command is empty"
 		util.Logger.Error(errMsg)
 		return errors.New(errMsg)
 	}
@@ -56,11 +56,11 @@ func (item *Command) Check() error {
 	if item.Cwd != "" {
 		stat, err := os.Stat(item.Cwd)
 		if err != nil {
-			errMsg := "Cwd does not exist"
+			errMsg := "adapter: cwd does not exist"
 			util.Logger.Error(errMsg)
 			return errors.New(errMsg)
 		} else if stat.IsDir() == false {
-			errMsg := "Cwd is not a directory"
+			errMsg := "adapter: cwd is not a directory"
 			util.Logger.Error(errMsg)
 			return errors.New(errMsg)
 		}

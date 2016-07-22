@@ -42,35 +42,35 @@ func (item *Augeas) Brief() string {
 func (item *Augeas) Check() error {
 	//check action
 	if item.Action != "" && item.Action != ActionRemove && item.Action != ActionSet {
-		errMsg := "Action is invalid"
+		errMsg := "adapter: augeas action is invalid"
 		util.Logger.Error(errMsg)
 		return errors.New(errMsg)
 	}
 
 	//check file path
 	if item.FilePath == "" {
-		errMsg := "Config file path is empty"
+		errMsg := "adapter: augeas config file path is empty"
 		util.Logger.Error(errMsg)
 		return errors.New(errMsg)
 	}
 
 	//check lens
 	if item.Lens == "" {
-		errMsg := "Augeas lens is empty"
+		errMsg := "adapter: augeas lens is empty"
 		util.Logger.Error(errMsg)
 		return errors.New(errMsg)
 	}
 
 	//check option path
 	if item.OptionPath == "" {
-		errMsg := "Config option path is empty"
+		errMsg := "adapter: augeas config option path is empty"
 		util.Logger.Error(errMsg)
 		return errors.New(errMsg)
 	}
 
 	//check option value, empty value are supported in augeas 1.5
 	if item.OptionValue == "" {
-		errMsg := "Config option value is empty"
+		errMsg := "adapter: augeas config option value is empty"
 		util.Logger.Error(errMsg)
 		return errors.New(errMsg)
 	}
