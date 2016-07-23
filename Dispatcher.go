@@ -8,6 +8,7 @@ import (
 	"github.com/OpsKitchen/ok_api_sdk_go/sdk/model"
 	"github.com/gorilla/websocket"
 	"time"
+	"errors"
 )
 
 type Dispatcher struct {
@@ -17,6 +18,7 @@ type Dispatcher struct {
 
 func (d *Dispatcher) Dispatch() error {
 	if err := d.callEntranceApi(); err != nil {
+		time.Sleep(5 * time.Second)
 		return err
 	}
 
@@ -27,17 +29,16 @@ func (d *Dispatcher) Dispatch() error {
 
 func (d *Dispatcher) callEntranceApi() error {
 	util.Logger.Debug("Calling entrance api")
-
 	apiResult, err := util.ApiClient.CallApi(d.Config.EntranceApiName,
 		d.Config.EntranceApiVersion, util.ApiParam, &d.EntranceApiResult)
-
 	if err != nil {
 		util.Logger.Error("Failed to call entrance api.")
 		return err
 	}
 	if apiResult.Success == false {
-		util.Logger.Error("Entrance api return error: " + apiResult.ErrorCode + "\t" + apiResult.ErrorMessage)
-		return err
+		errMsg := "Entrance api return error: " + apiResult.ErrorCode + "\t" + apiResult.ErrorMessage
+		util.Logger.Error(errMsg)
+		return errors.New(errMsg)
 	}
 	util.Logger.Info("Succeed to call entrance api.")
 	return nil
@@ -45,12 +46,12 @@ func (d *Dispatcher) callEntranceApi() error {
 
 func (d *Dispatcher) listenWebSocket() {
 	conn, _, err := websocket.DefaultDialer.Dial(d.EntranceApiResult.WebSocketUrl, nil)
-	defer conn.Close()
 	if err != nil {
-		util.Logger.Error("dial:", err)
+		util.Logger.Error("Failed to connect to web socket server: " + err.Error())
 		time.Sleep(5 * time.Second)
 		return
 	}
+	defer conn.Close()
 	for {
 		_, message, err := conn.ReadMessage()
 		if err != nil {
