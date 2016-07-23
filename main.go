@@ -34,7 +34,7 @@ func main() {
 
 	//prepare credential
 	credential := &config.Credential{}
-	if err := util.ParseJsonFile(*baseConfigFile, credential); err != nil {
+	if err := util.ParseJsonFile(baseConf.CredentialFile, credential); err != nil {
 		util.Logger.Fatal("Failed to parse base config file: " + err.Error())
 	}
 
