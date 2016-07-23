@@ -55,7 +55,14 @@ func (d *Dispatcher) listenWebSocket() {
 	for {
 		_, message, err := conn.ReadMessage()
 		if err != nil {
-			util.Logger.Error("read:", err)
+			if websocket.IsUnexpectedCloseError(err, websocket.CloseNormalClosure) {
+				util.Logger.Error("Server exit abnormally: " + err.Error())
+				time.Sleep(5 * time.Second)
+			} else {
+				//server sent 1000 error code (websocket.CloseNormalClosure)
+				util.Logger.Debug("Server sends me close frame: " + err.Error())
+				time.Sleep(10 * time.Second)
+			}
 			continue
 		}
 
