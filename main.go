@@ -6,6 +6,7 @@ import (
 	"github.com/OpsKitchen/ok_agent/util"
 	"github.com/OpsKitchen/ok_api_sdk_go/sdk"
 	"github.com/Sirupsen/logrus"
+	"time"
 )
 
 func main() {
@@ -51,5 +52,6 @@ func main() {
 	}
 	for {
 		d.Dispatch()
+		time.Sleep(2 * time.Second)
 	}
 }
