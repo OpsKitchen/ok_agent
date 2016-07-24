@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"github.com/OpsKitchen/ok_agent/model/api/returndata"
 	"github.com/OpsKitchen/ok_agent/model/config"
 	"github.com/OpsKitchen/ok_agent/task"
@@ -8,7 +9,6 @@ import (
 	"github.com/OpsKitchen/ok_api_sdk_go/sdk/model"
 	"github.com/gorilla/websocket"
 	"time"
-	"errors"
 )
 
 type Dispatcher struct {
@@ -51,6 +51,7 @@ func (d *Dispatcher) listenWebSocket() {
 		time.Sleep(5 * time.Second)
 		return
 	}
+	util.Logger.Info("Web socket connected, waiting for task...")
 	defer conn.Close()
 	for {
 		_, message, err := conn.ReadMessage()
@@ -67,19 +68,20 @@ func (d *Dispatcher) listenWebSocket() {
 		}
 
 		msg := string(message)
-		util.Logger.Debug("recv:", msg)
-
 		var taskErr error
 		switch msg {
 		case task.FlagDeploy:
+			util.Logger.Info("Received deploy task.")
 			deployer := &task.Deployer{Api: d.EntranceApiResult.DeployApi}
 			taskErr = deployer.Run()
 
 		case task.FlagReportSysInfo:
+			util.Logger.Info("Received sys info report task.")
 			reporter := &task.SysInfoReporter{Api: d.EntranceApiResult.ReportSysInfoApi}
 			taskErr = reporter.Run()
 
 		case task.FlagUpdateAgent:
+			util.Logger.Info("Received agent update task.")
 			updater := &task.Updater{Api: d.EntranceApiResult.UpdateAgentApi}
 			taskErr = updater.Run()
 
