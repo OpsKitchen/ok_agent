@@ -10,33 +10,37 @@ import (
 
 type Deployer struct {
 	Api             *returndata.DynamicApi
-	DeployApiResult *returndata.DeployEntranceApi
 }
 
 func (t *Deployer) Run() error {
 	util.Logger.Debug("Calling deploy entrance api")
 	var apiResult *model.ApiResult
+	var apiResultData *returndata.DeployEntranceApi
 
-	apiResult, err := util.ApiClient.CallApi(t.Api.Name, t.Api.Version, util.ApiParam, &t.DeployApiResult)
-
+	apiResult, err := util.ApiClient.CallApi(t.Api.Name, t.Api.Version, nil, apiResultData)
 	if err != nil {
 		util.Logger.Debug("Failed to call deploy entrance api.")
 		return err
 	}
 	if apiResult.Success == false {
-		errMsg := "Deploy api return error: " + apiResult.ErrorCode + "\t" + apiResult.ErrorMessage
+		errMsg := "Deploy entrance api return error: " + apiResult.ErrorCode + "\t" + apiResult.ErrorMessage
 		util.Logger.Error(errMsg)
 		return errors.New(errMsg)
 	}
-	if len(t.DeployApiResult.ApiList) == 0 {
+	if apiResultData == nil {
+		errMsg := "Deploy entrance api return no data."
+		util.Logger.Error(errMsg)
+		return errors.New(errMsg)
+	}
+	if len(apiResultData.ApiList) == 0 {
 		errMsg := "Deploy entrance api return empty api list."
 		util.Logger.Error(errMsg)
 		return errors.New(errMsg)
 	}
 	util.Logger.Info("Succeed to call deploy entrance api.")
-	util.Logger.Info("Product version: " + t.DeployApiResult.ProductVersion)
-	util.Logger.Info("Server name: " + t.DeployApiResult.ServerName)
-	for _, dynamicApi := range t.DeployApiResult.ApiList {
+	util.Logger.Info("Product version: " + apiResultData.ProductVersion)
+	util.Logger.Info("Server name: " + apiResultData.ServerName)
+	for _, dynamicApi := range apiResultData.ApiList {
 		if err := t.processDynamicApi(dynamicApi); err != nil {
 			return err
 		}
@@ -49,7 +53,7 @@ func (t *Deployer) processDynamicApi(dynamicApi returndata.DynamicApi) error {
 	var mapItemList []map[string]interface{}
 
 	//call dynamic api
-	apiResult, err := util.ApiClient.CallApi(dynamicApi.Name, dynamicApi.Version, util.ApiParam, &mapItemList)
+	apiResult, err := util.ApiClient.CallApi(dynamicApi.Name, dynamicApi.Version, nil, &mapItemList)
 	if err != nil {
 		util.Logger.Error("Failed to call api: " + dynamicApi.Name + "\t" + dynamicApi.Version)
 		return err

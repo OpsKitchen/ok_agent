@@ -30,7 +30,7 @@ func main() {
 	if err := util.ParseJsonFile(*baseConfigFile, baseConf); err != nil {
 		util.Logger.Fatal("Failed to parse base config file: " + err.Error())
 	}
-	util.Logger.Info("version: " + baseConf.AgentVersion)
+	util.Logger.Info("Version: " + baseConf.AgentVersion)
 
 	//prepare credential
 	credential := &config.Credential{}
@@ -44,11 +44,11 @@ func main() {
 		SetAppMarketIdValue(baseConf.AppMarketId).SetAppVersionValue(baseConf.AgentVersion)
 	util.ApiClient.RequestBuilder.Credential.SetAppKey(credential.AppKey).SetSecret(credential.Secret)
 
-	//prepare default api param
-	util.ApiParam.ServerUniqueName = credential.ServerUniqueName
-
 	//dispatch
-	d := &Dispatcher{Config: baseConf}
+	d := &Dispatcher{
+		Config:     baseConf,
+		Credential: credential,
+	}
 	for {
 		d.Dispatch()
 	}

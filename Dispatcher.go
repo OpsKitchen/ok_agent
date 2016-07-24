@@ -2,6 +2,7 @@ package main
 
 import (
 	"errors"
+	"github.com/OpsKitchen/ok_agent/model/api"
 	"github.com/OpsKitchen/ok_agent/model/api/returndata"
 	"github.com/OpsKitchen/ok_agent/model/config"
 	"github.com/OpsKitchen/ok_agent/task"
@@ -13,6 +14,7 @@ import (
 
 type Dispatcher struct {
 	Config            *config.Base
+	Credential        *config.Credential
 	EntranceApiResult returndata.EntranceApi
 }
 
@@ -29,8 +31,9 @@ func (d *Dispatcher) Dispatch() error {
 
 func (d *Dispatcher) callEntranceApi() error {
 	util.Logger.Debug("Calling entrance api")
+	param := &api.EntranceApiParam{ServerUniqueName: d.Credential.ServerUniqueName}
 	apiResult, err := util.ApiClient.CallApi(d.Config.EntranceApiName,
-		d.Config.EntranceApiVersion, util.ApiParam, &d.EntranceApiResult)
+		d.Config.EntranceApiVersion, param, &d.EntranceApiResult)
 	if err != nil {
 		util.Logger.Error("Failed to call entrance api.")
 		return err

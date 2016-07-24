@@ -14,7 +14,6 @@ type SysInfoReporter struct {
 
 func (t *SysInfoReporter) Run() error {
 	util.Logger.Debug("Calling report instance api")
-	t.Params.ServerUniqueName = util.ApiParam.ServerUniqueName
 	if err := t.setCpu(); err != nil {
 		return err
 	}
@@ -33,11 +32,11 @@ func (t *SysInfoReporter) Run() error {
 
 	reportResult, err := util.ApiClient.CallApi(t.Api.Name, t.Api.Version, t.Params, nil)
 	if err != nil {
-		util.Logger.Error("Failed to call sys info report api: ", t.Api.Name, t.Api.Version)
+		util.Logger.Error("Failed to call sys info report api: " + t.Api.Name + "\t" + t.Api.Version)
 		return err
 	}
 	if reportResult.Success == false {
-		errMsg := "api return error: " + reportResult.ErrorCode + reportResult.ErrorMessage
+		errMsg := "api return error: " + reportResult.ErrorCode + "\t" + reportResult.ErrorMessage
 		util.Logger.Error(errMsg)
 		return errors.New(errMsg)
 	}

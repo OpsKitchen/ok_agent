@@ -3,7 +3,6 @@ package util
 import (
 	"encoding/json"
 	"errors"
-	"github.com/OpsKitchen/ok_agent/model/api"
 	"github.com/OpsKitchen/ok_api_sdk_go/sdk"
 	"github.com/Sirupsen/logrus"
 	"io/ioutil"
@@ -11,7 +10,6 @@ import (
 )
 
 var ApiClient = sdk.NewClient()
-var ApiParam = &api.RequestParam{}
 var ApiLogger = logrus.New()
 var Logger = logrus.New()
 
