@@ -9,7 +9,7 @@ import (
 )
 
 type Deployer struct {
-	Api             *returndata.DynamicApi
+	Api *returndata.DynamicApi
 }
 
 func (t *Deployer) Run() error {

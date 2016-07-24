@@ -54,7 +54,7 @@ func (d *Dispatcher) listenWebSocket() {
 		time.Sleep(5 * time.Second)
 		return
 	}
-	util.Logger.Info("Web socket connected, waiting for task...")
+	util.Logger.Info("Web socket server connected, waiting for task...")
 	defer conn.Close()
 	for {
 		_, message, err := conn.ReadMessage()
@@ -89,7 +89,7 @@ func (d *Dispatcher) listenWebSocket() {
 			taskErr = updater.Run()
 
 		default:
-			util.Logger.Error("Unsupported task: ", msg)
+			util.Logger.Error("Unsupported task: " + msg)
 		}
 
 		d.reportResult(taskErr)
@@ -97,20 +97,20 @@ func (d *Dispatcher) listenWebSocket() {
 }
 
 func (d *Dispatcher) reportResult(err error) {
-	reportResultParam := &model.ApiResult{}
+	param := &model.ApiResult{}
 	if err != nil {
-		reportResultParam.ErrorMessage = "" //read error log from file
+		param.ErrorMessage = "" //read error log from file
 	} else {
-		reportResultParam.Success = true
+		param.Success = true
 	}
-	reportResult, err := util.ApiClient.CallApi(d.EntranceApiResult.ReportResultApi.Name,
-		d.EntranceApiResult.ReportResultApi.Version, reportResultParam, nil)
+	report, err := util.ApiClient.CallApi(d.EntranceApiResult.ReportResultApi.Name,
+		d.EntranceApiResult.ReportResultApi.Version, param, nil)
 	if err != nil {
 		util.Logger.Error("Failed to call result report api: ", d.EntranceApiResult.ReportResultApi.Name,
 			d.EntranceApiResult.ReportResultApi.Version)
 		return
 	}
-	if reportResult.Success == false {
-		util.Logger.Error("Result report api return error: ", reportResult.ErrorCode, reportResult.ErrorMessage)
+	if report.Success == false {
+		util.Logger.Error("Result report api return error: " + report.ErrorCode + "\t" + report.ErrorMessage)
 	}
 }
