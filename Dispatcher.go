@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"github.com/OpsKitchen/ok_agent/model/api"
 	"github.com/OpsKitchen/ok_agent/model/api/returndata"
 	"github.com/OpsKitchen/ok_agent/model/config"
@@ -44,7 +45,6 @@ func (d *Dispatcher) listenWebSocket() {
 	conn, _, err := websocket.DefaultDialer.Dial(d.EntranceApiResult.WebSocketUrl, nil)
 	if err != nil {
 		util.Logger.Error("Failed to connect to web socket server: " + err.Error())
-		time.Sleep(5 * time.Second)
 		return
 	}
 	util.Logger.Info("Web socket server connected, waiting for task...")
@@ -53,8 +53,7 @@ func (d *Dispatcher) listenWebSocket() {
 		_, message, err := conn.ReadMessage()
 		if err != nil {
 			if websocket.IsUnexpectedCloseError(err, websocket.CloseNormalClosure) {
-				util.Logger.Debug("Server exit abnormally: " + err.Error())
-				time.Sleep(time.Second)
+				util.Logger.Debug("Connection breaks abnormally: " + err.Error())
 			} else {
 				//server sent 1000 error code (websocket.CloseNormalClosure)
 				util.Logger.Debug("Server sends me close frame: " + err.Error())
@@ -63,30 +62,35 @@ func (d *Dispatcher) listenWebSocket() {
 			return
 		}
 
-		msg := string(message)
-		var taskErr error
-		switch msg {
-		case task.FlagDeploy:
-			util.Logger.Info("Received deploy task.")
-			deployer := &task.Deployer{Api: d.EntranceApiResult.DeployApi}
-			taskErr = deployer.Run()
-
-		case task.FlagReportSysInfo:
-			util.Logger.Info("Received sys info report task.")
-			reporter := &task.SysInfoReporter{Api: d.EntranceApiResult.ReportSysInfoApi}
-			taskErr = reporter.Run()
-
-		case task.FlagUpdateAgent:
-			util.Logger.Info("Received agent update task.")
-			updater := &task.Updater{Api: d.EntranceApiResult.UpdateAgentApi}
-			taskErr = updater.Run()
-
-		default:
-			util.Logger.Error("Unsupported task: " + msg)
-		}
-
-		d.reportResult(taskErr)
+		taskErr := d.execTask(string(message))
+		go d.reportResult(taskErr)
 	}
+}
+
+func (d *Dispatcher) execTask(msg string) error {
+	var err error
+	switch msg {
+	case task.FlagDeploy:
+		util.Logger.Info("Received deploy task.")
+		deployer := &task.Deployer{Api: d.EntranceApiResult.DeployApi}
+		err = deployer.Run()
+
+	case task.FlagReportSysInfo:
+		util.Logger.Info("Received sys info report task.")
+		reporter := &task.SysInfoReporter{Api: d.EntranceApiResult.ReportSysInfoApi}
+		err = reporter.Run()
+
+	case task.FlagUpdateAgent:
+		util.Logger.Info("Received agent update task.")
+		updater := &task.Updater{Api: d.EntranceApiResult.UpdateAgentApi}
+		err = updater.Run()
+
+	default:
+		errMsg := "Unsupported task: " + msg
+		util.Logger.Error(errMsg)
+		err = errors.New(errMsg)
+	}
+	return err
 }
 
 func (d *Dispatcher) reportResult(err error) {
