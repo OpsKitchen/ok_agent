@@ -1,7 +1,6 @@
 package main
 
 import (
-	"errors"
 	"github.com/OpsKitchen/ok_agent/model/api"
 	"github.com/OpsKitchen/ok_agent/model/api/returndata"
 	"github.com/OpsKitchen/ok_agent/model/config"
@@ -18,33 +17,22 @@ type Dispatcher struct {
 	EntranceApiResult returndata.EntranceApi
 }
 
-func (d *Dispatcher) Dispatch() error {
-	if err := d.callEntranceApi(); err != nil {
-		time.Sleep(5 * time.Second)
-		return err
-	}
-
-	for {
-		d.listenWebSocket()
-	}
-}
-
-func (d *Dispatcher) callEntranceApi() error {
+func (d *Dispatcher) Dispatch() {
 	util.Logger.Debug("Calling entrance api")
 	param := &api.EntranceApiParam{ServerUniqueName: d.Credential.ServerUniqueName}
 	apiResult, err := util.ApiClient.CallApi(d.Config.EntranceApiName,
 		d.Config.EntranceApiVersion, param, &d.EntranceApiResult)
 	if err != nil {
 		util.Logger.Error("Failed to call entrance api.")
-		return err
+		return
 	}
 	if apiResult.Success == false {
 		errMsg := "Entrance api return error: " + apiResult.ErrorCode + "\t" + apiResult.ErrorMessage
 		util.Logger.Error(errMsg)
-		return errors.New(errMsg)
+		return
 	}
 	util.Logger.Info("Succeed to call entrance api.")
-	return nil
+	d.listenWebSocket()
 }
 
 func (d *Dispatcher) listenWebSocket() {
@@ -61,13 +49,13 @@ func (d *Dispatcher) listenWebSocket() {
 		if err != nil {
 			if websocket.IsUnexpectedCloseError(err, websocket.CloseNormalClosure) {
 				util.Logger.Error("Server exit abnormally: " + err.Error())
-				time.Sleep(5 * time.Second)
+				time.Sleep(time.Second)
 			} else {
 				//server sent 1000 error code (websocket.CloseNormalClosure)
 				util.Logger.Debug("Server sends me close frame: " + err.Error())
 				time.Sleep(10 * time.Second)
 			}
-			continue
+			return
 		}
 
 		msg := string(message)
