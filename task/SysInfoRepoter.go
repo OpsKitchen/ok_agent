@@ -13,7 +13,7 @@ type SysInfoReporter struct {
 }
 
 func (t *SysInfoReporter) Run() error {
-	util.Logger.Debug("Calling report instance api")
+	util.Logger.Info("Calling sys info report api")
 	if err := t.setCpu(); err != nil {
 		return err
 	}
@@ -40,7 +40,7 @@ func (t *SysInfoReporter) Run() error {
 		util.Logger.Error(errMsg)
 		return errors.New(errMsg)
 	}
-	util.Logger.Debug("Succeed to call sys info report api.")
+	util.Logger.Info("Succeed to call sys info report api.")
 	return nil
 }
 

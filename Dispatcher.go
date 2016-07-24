@@ -18,7 +18,7 @@ type Dispatcher struct {
 }
 
 func (d *Dispatcher) Dispatch() {
-	util.Logger.Debug("Calling entrance api")
+	util.Logger.Info("Calling entrance api")
 	param := &api.EntranceApiParam{ServerUniqueName: d.Credential.ServerUniqueName}
 	result, err := util.ApiClient.CallApi(d.Config.EntranceApiName,
 		d.Config.EntranceApiVersion, param)
@@ -53,7 +53,7 @@ func (d *Dispatcher) listenWebSocket() {
 		_, message, err := conn.ReadMessage()
 		if err != nil {
 			if websocket.IsUnexpectedCloseError(err, websocket.CloseNormalClosure) {
-				util.Logger.Error("Server exit abnormally: " + err.Error())
+				util.Logger.Debug("Server exit abnormally: " + err.Error())
 				time.Sleep(time.Second)
 			} else {
 				//server sent 1000 error code (websocket.CloseNormalClosure)

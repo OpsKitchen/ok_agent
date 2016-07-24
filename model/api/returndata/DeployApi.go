@@ -1,6 +1,6 @@
 package returndata
 
-type DeployEntranceApi struct {
+type DeployApi struct {
 	ProductVersion string
 	ServerName     string
 	ApiList        []DynamicApi

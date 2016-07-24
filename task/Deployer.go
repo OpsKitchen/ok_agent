@@ -13,32 +13,32 @@ type Deployer struct {
 }
 
 func (t *Deployer) Run() error {
-	util.Logger.Debug("Calling deploy entrance api")
+	util.Logger.Info("Calling deploy api")
 	var result *model.ApiResult
-	var apiResultData returndata.DeployEntranceApi
+	var apiResultData returndata.DeployApi
 
 	result, err := util.ApiClient.CallApi(t.Api.Name, t.Api.Version, nil)
 	if err != nil {
-		util.Logger.Debug("Failed to call deploy entrance api.")
+		util.Logger.Debug("Failed to call deploy api.")
 		return err
 	}
 	if result.Success == false {
-		errMsg := "Deploy entrance api return error: " + result.ErrorCode + "\t" + result.ErrorMessage
+		errMsg := "deploy api return error: " + result.ErrorCode + "\t" + result.ErrorMessage
 		util.Logger.Error(errMsg)
 		return errors.New(errMsg)
 	}
 	if result.Data == nil {
-		errMsg := "Deploy entrance api return empty data."
+		errMsg := "deploy api return empty data."
 		util.Logger.Error(errMsg)
 		return errors.New(errMsg)
 	}
 	result.ConvertDataTo(&apiResultData)
 	if len(apiResultData.ApiList) == 0 {
-		errMsg := "Deploy entrance api return empty api list."
+		errMsg := "deploy api return empty api list."
 		util.Logger.Error(errMsg)
 		return errors.New(errMsg)
 	}
-	util.Logger.Info("Succeed to call deploy entrance api.")
+	util.Logger.Info("Succeed to call deploy api.")
 	util.Logger.Info("Product version: " + apiResultData.ProductVersion)
 	util.Logger.Info("Server name: " + apiResultData.ServerName)
 	for _, dynamicApi := range apiResultData.ApiList {
