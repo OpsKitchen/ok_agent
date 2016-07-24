@@ -20,17 +20,22 @@ type Dispatcher struct {
 func (d *Dispatcher) Dispatch() {
 	util.Logger.Debug("Calling entrance api")
 	param := &api.EntranceApiParam{ServerUniqueName: d.Credential.ServerUniqueName}
-	apiResult, err := util.ApiClient.CallApi(d.Config.EntranceApiName,
-		d.Config.EntranceApiVersion, param, &d.EntranceApiResult)
+	result, err := util.ApiClient.CallApi(d.Config.EntranceApiName,
+		d.Config.EntranceApiVersion, param)
 	if err != nil {
 		util.Logger.Error("Failed to call entrance api.")
 		return
 	}
-	if apiResult.Success == false {
-		errMsg := "Entrance api return error: " + apiResult.ErrorCode + "\t" + apiResult.ErrorMessage
+	if result.Success == false {
+		errMsg := "Entrance api return error: " + result.ErrorCode + "\t" + result.ErrorMessage
 		util.Logger.Error(errMsg)
 		return
 	}
+	if result.Data == nil {
+		util.Logger.Error("Entrance api return empty data.")
+		return
+	}
+	result.ConvertDataTo(&d.EntranceApiResult)
 	util.Logger.Info("Succeed to call entrance api.")
 	d.listenWebSocket()
 }
@@ -91,14 +96,14 @@ func (d *Dispatcher) reportResult(err error) {
 	} else {
 		param.Success = true
 	}
-	report, err := util.ApiClient.CallApi(d.EntranceApiResult.ReportResultApi.Name,
-		d.EntranceApiResult.ReportResultApi.Version, param, nil)
+	result, err := util.ApiClient.CallApi(d.EntranceApiResult.ReportResultApi.Name,
+		d.EntranceApiResult.ReportResultApi.Version, param)
 	if err != nil {
 		util.Logger.Error("Failed to call result report api: ", d.EntranceApiResult.ReportResultApi.Name,
 			d.EntranceApiResult.ReportResultApi.Version)
 		return
 	}
-	if report.Success == false {
-		util.Logger.Error("Result report api return error: " + report.ErrorCode + "\t" + report.ErrorMessage)
+	if result.Success == false {
+		util.Logger.Error("Result report api return error: " + result.ErrorCode + "\t" + result.ErrorMessage)
 	}
 }

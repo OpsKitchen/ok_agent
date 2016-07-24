@@ -14,24 +14,25 @@ type Deployer struct {
 
 func (t *Deployer) Run() error {
 	util.Logger.Debug("Calling deploy entrance api")
-	var apiResult *model.ApiResult
-	var apiResultData *returndata.DeployEntranceApi
+	var result *model.ApiResult
+	var apiResultData returndata.DeployEntranceApi
 
-	apiResult, err := util.ApiClient.CallApi(t.Api.Name, t.Api.Version, nil, apiResultData)
+	result, err := util.ApiClient.CallApi(t.Api.Name, t.Api.Version, nil)
 	if err != nil {
 		util.Logger.Debug("Failed to call deploy entrance api.")
 		return err
 	}
-	if apiResult.Success == false {
-		errMsg := "Deploy entrance api return error: " + apiResult.ErrorCode + "\t" + apiResult.ErrorMessage
+	if result.Success == false {
+		errMsg := "Deploy entrance api return error: " + result.ErrorCode + "\t" + result.ErrorMessage
 		util.Logger.Error(errMsg)
 		return errors.New(errMsg)
 	}
-	if apiResultData == nil {
-		errMsg := "Deploy entrance api return no data."
+	if result.Data == nil {
+		errMsg := "Deploy entrance api return empty data."
 		util.Logger.Error(errMsg)
 		return errors.New(errMsg)
 	}
+	result.ConvertDataTo(&apiResultData)
 	if len(apiResultData.ApiList) == 0 {
 		errMsg := "Deploy entrance api return empty api list."
 		util.Logger.Error(errMsg)
@@ -50,26 +51,27 @@ func (t *Deployer) Run() error {
 
 func (t *Deployer) processDynamicApi(dynamicApi returndata.DynamicApi) error {
 	util.Logger.Debug("Calling dynamic api: ", dynamicApi.Name)
-	var mapItemList []map[string]interface{}
+	var itemList []map[string]interface{}
 
 	//call dynamic api
-	apiResult, err := util.ApiClient.CallApi(dynamicApi.Name, dynamicApi.Version, nil, &mapItemList)
+	result, err := util.ApiClient.CallApi(dynamicApi.Name, dynamicApi.Version, nil)
 	if err != nil {
 		util.Logger.Error("Failed to call api: " + dynamicApi.Name + "\t" + dynamicApi.Version)
 		return err
 	}
-	if apiResult.Success == false {
-		errMsg := "api return error: " + apiResult.ErrorCode + "\t" + apiResult.ErrorMessage
+	if result.Success == false {
+		errMsg := "api return error: " + result.ErrorCode + "\t" + result.ErrorMessage
 		util.Logger.Error(errMsg)
 		return errors.New(errMsg)
 	}
-	if apiResult.Data == nil {
+	if result.Data == nil {
 		util.Logger.Debug("Api returns empty data, nothing to do, go to next api")
 		return nil
 	}
+	result.ConvertDataTo(&itemList)
 
 	//cast item list to native go type
-	for _, mapItem := range mapItemList {
+	for _, mapItem := range itemList {
 		var item adapter.AdapterInterface
 		switch dynamicApi.ReturnDataType {
 		case returndata.AugeasList:

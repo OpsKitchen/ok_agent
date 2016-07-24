@@ -30,7 +30,7 @@ func (t *SysInfoReporter) Run() error {
 		return err
 	}
 
-	reportResult, err := util.ApiClient.CallApi(t.Api.Name, t.Api.Version, t.Params, nil)
+	reportResult, err := util.ApiClient.CallApi(t.Api.Name, t.Api.Version, t.Params)
 	if err != nil {
 		util.Logger.Error("Failed to call sys info report api: " + t.Api.Name + "\t" + t.Api.Version)
 		return err
