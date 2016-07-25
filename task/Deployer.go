@@ -41,11 +41,14 @@ func (t *Deployer) Run() error {
 	util.Logger.Info("Succeed to call deploy api.")
 	util.Logger.Info("Product version: " + apiResultData.ProductVersion)
 	util.Logger.Info("Server name: " + apiResultData.ServerName)
+
 	for _, dynamicApi := range apiResultData.ApiList {
 		if err := t.processDynamicApi(dynamicApi); err != nil {
+			t.reportResult(apiResultData.ReportResultApi, err)
 			return err
 		}
 	}
+	t.reportResult(apiResultData.ReportResultApi, nil)
 	util.Logger.Info("Succeed to run all deploy task.")
 	return nil
 }
@@ -106,4 +109,22 @@ func (t *Deployer) processDynamicApi(dynamicApi returndata.DynamicApi) error {
 	} //end for "range apiResultData"
 	util.Logger.Info("Succeed to process dynamic api: ", dynamicApi.Name+"\t"+dynamicApi.Version)
 	return nil
+}
+
+func (t *Deployer) reportResult(api returndata.DynamicApi, err error) {
+	param := &model.ApiResult{}
+	if err != nil {
+		param.ErrorMessage = err.Error()
+		param.Data = "" //@todo read error log from file
+	} else {
+		param.Success = true
+	}
+	result, err := util.ApiClient.CallApi(api.Name, api.Version, param)
+	if err != nil {
+		util.Logger.Error("Failed to call result report api: ", api.Name, api.Version)
+		return
+	}
+	if result.Success == false {
+		util.Logger.Error("Result report api return error: " + result.ErrorCode + "\t" + result.ErrorMessage)
+	}
 }

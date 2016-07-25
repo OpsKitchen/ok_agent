@@ -5,6 +5,7 @@ import (
 	"github.com/OpsKitchen/ok_agent/model/api"
 	"github.com/OpsKitchen/ok_agent/model/api/returndata"
 	"github.com/OpsKitchen/ok_agent/util"
+	"os"
 )
 
 type SysInfoReporter struct {
@@ -50,7 +51,11 @@ func (t *SysInfoReporter) setCpu() error {
 }
 
 func (t *SysInfoReporter) setHostname() error {
-	t.Params.Hostname = "localhost"
+	hostname, err := os.Hostname()
+	if err != nil {
+		return err
+	}
+	t.Params.Hostname = hostname
 	return nil
 }
 

@@ -1,13 +1,11 @@
 package main
 
 import (
-	"errors"
 	"github.com/OpsKitchen/ok_agent/model/api"
 	"github.com/OpsKitchen/ok_agent/model/api/returndata"
 	"github.com/OpsKitchen/ok_agent/model/config"
 	"github.com/OpsKitchen/ok_agent/task"
 	"github.com/OpsKitchen/ok_agent/util"
-	"github.com/OpsKitchen/ok_api_sdk_go/sdk/model"
 	"github.com/gorilla/websocket"
 	"time"
 )
@@ -62,52 +60,29 @@ func (d *Dispatcher) listenWebSocket() {
 			return
 		}
 
-		taskErr := d.execTask(string(message))
-		go d.reportResult(taskErr)
+		go d.execTask(string(message))
 	}
 }
 
-func (d *Dispatcher) execTask(msg string) error {
-	var err error
+func (d *Dispatcher) execTask(msg string) {
 	switch msg {
 	case task.FlagDeploy:
 		util.Logger.Info("Received deploy task.")
 		deployer := &task.Deployer{Api: d.EntranceApiResult.DeployApi}
-		err = deployer.Run()
+		deployer.Run()
 
 	case task.FlagReportSysInfo:
 		util.Logger.Info("Received sys info report task.")
 		reporter := &task.SysInfoReporter{Api: d.EntranceApiResult.ReportSysInfoApi}
-		err = reporter.Run()
+		reporter.Run()
 
 	case task.FlagUpdateAgent:
 		util.Logger.Info("Received agent update task.")
 		updater := &task.Updater{Api: d.EntranceApiResult.UpdateAgentApi}
-		err = updater.Run()
+		updater.Run()
 
 	default:
 		errMsg := "Unsupported task: " + msg
 		util.Logger.Error(errMsg)
-		err = errors.New(errMsg)
-	}
-	return err
-}
-
-func (d *Dispatcher) reportResult(err error) {
-	param := &model.ApiResult{}
-	if err != nil {
-		param.ErrorMessage = "" //read error log from file
-	} else {
-		param.Success = true
-	}
-	result, err := util.ApiClient.CallApi(d.EntranceApiResult.ReportResultApi.Name,
-		d.EntranceApiResult.ReportResultApi.Version, param)
-	if err != nil {
-		util.Logger.Error("Failed to call result report api: ", d.EntranceApiResult.ReportResultApi.Name,
-			d.EntranceApiResult.ReportResultApi.Version)
-		return
-	}
-	if result.Success == false {
-		util.Logger.Error("Result report api return error: " + result.ErrorCode + "\t" + result.ErrorMessage)
 	}
 }
