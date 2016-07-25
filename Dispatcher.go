@@ -72,12 +72,12 @@ func (d *Dispatcher) execTask(msg string) {
 		deployer.Run()
 
 	case task.FlagReportSysInfo:
-		util.Logger.Info("Received sys info report task.")
+		util.Logger.Info("Received report sys info task.")
 		reporter := &task.SysInfoReporter{Api: d.EntranceApiResult.ReportSysInfoApi}
 		reporter.Run()
 
 	case task.FlagUpdateAgent:
-		util.Logger.Info("Received agent update task.")
+		util.Logger.Info("Received update agent task.")
 		updater := &task.Updater{Api: d.EntranceApiResult.UpdateAgentApi}
 		updater.Run()
 
