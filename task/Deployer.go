@@ -101,8 +101,18 @@ func (t *Deployer) processDynamicApi(dynamicApi returndata.DynamicApi) error {
 			return errors.New(errMsg)
 		}
 		util.Logger.Info("Processing:" + item.Brief())
-		if item.Check() != nil || item.Parse() != nil || item.Process() != nil {
-			errMsg := "Failed to process item"
+		if err := item.Check(); err != nil {
+			errMsg := "Failed to check item: " + err.Error()
+			util.Logger.Error(errMsg)
+			return errors.New(errMsg)
+		}
+		if err := item.Parse(); err != nil {
+			errMsg := "Failed to parse item: " + err.Error()
+			util.Logger.Error(errMsg)
+			return errors.New(errMsg)
+		}
+		if err := item.Process(); err != nil {
+			errMsg := "Failed to process item: " + err.Error()
 			util.Logger.Error(errMsg)
 			return errors.New(errMsg)
 		}
