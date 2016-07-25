@@ -40,15 +40,15 @@ type File struct {
 
 //***** interface method area *****//
 func (item *File) Brief() string {
-	brief := "\nFile path: \t" + item.FilePath + "\nFile type: \t" + item.FileType
+	brief := "\n\t\tFile path: \t" + item.FilePath + "\n\t\tFile type: \t" + item.FileType
 	if item.User != "" {
-		brief += "\nUser: \t\t" + item.User
+		brief += "\n\t\tUser: \t\t" + item.User
 	}
 	if item.Group != "" {
-		brief += "\nGroup: \t\t" + item.Group
+		brief += "\n\t\tGroup: \t\t" + item.Group
 	}
 	if item.Permission != "" {
-		brief += "\nPermission: \t" + item.Permission
+		brief += "\n\t\tPermission: \t" + item.Permission
 	}
 	return brief
 }

@@ -46,11 +46,12 @@ func (t *Deployer) Run() error {
 			return err
 		}
 	}
+	util.Logger.Info("Succeed to run all deploy task.")
 	return nil
 }
 
 func (t *Deployer) processDynamicApi(dynamicApi returndata.DynamicApi) error {
-	util.Logger.Debug("Calling dynamic api: ", dynamicApi.Name)
+	util.Logger.Info("Calling dynamic api: ", dynamicApi.Name)
 	var itemList []map[string]interface{}
 
 	//call dynamic api
@@ -65,7 +66,7 @@ func (t *Deployer) processDynamicApi(dynamicApi returndata.DynamicApi) error {
 		return errors.New(errMsg)
 	}
 	if result.Data == nil {
-		util.Logger.Debug("Api returns empty data, nothing to do, go to next api")
+		util.Logger.Info("Api returns empty data, nothing to do, go to next api")
 		return nil
 	}
 	result.ConvertDataTo(&itemList)

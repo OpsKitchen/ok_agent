@@ -28,18 +28,18 @@ type Command struct {
 
 //***** interface method area *****//
 func (item *Command) Brief() string {
-	brief := "\nCommand: \t" + item.Command
+	brief := "\n\t\tCommand: \t" + item.Command
 	if item.Cwd != "" {
-		brief += "\nCwd: \t\t" + item.Cwd
+		brief += "\n\t\tCwd: \t\t" + item.Cwd
 	}
 	if item.User != "" {
-		brief += "\nUser: \t\t" + item.User
+		brief += "\n\t\tUser: \t\t" + item.User
 	}
 	if item.RunIf != "" {
-		brief += "\nRun if: \t" + item.RunIf
+		brief += "\n\t\tRun if: \t" + item.RunIf
 	}
 	if item.NotRunIf != "" {
-		brief += "\nNot run if: \t" + item.NotRunIf
+		brief += "\n\t\tNot run if: \t" + item.NotRunIf
 	}
 	return brief
 }

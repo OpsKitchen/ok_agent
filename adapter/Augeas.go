@@ -29,12 +29,12 @@ type Augeas struct {
 
 //***** interface method area *****//
 func (item *Augeas) Brief() string {
-	brief := "\nFile path: \t" + item.FilePath + "\nLens: \t\t" + item.Lens + "\nOption path: \t" + item.OptionPath
+	brief := "\n\t\tFile path: \t" + item.FilePath + "\n\t\tLens: \t\t" + item.Lens + "\n\t\tOption path: \t" + item.OptionPath
 	if item.OptionValue != "" {
-		brief += "\nOption value: \t" + item.OptionValue
+		brief += "\n\t\tOption value: \t" + item.OptionValue
 	}
 	if item.Action != "" {
-		brief += "\nAction: \t" + item.Action
+		brief += "\n\t\tAction: \t" + item.Action
 	}
 	return brief
 }
