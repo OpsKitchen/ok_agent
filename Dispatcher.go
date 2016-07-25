@@ -60,7 +60,7 @@ func (d *Dispatcher) listenWebSocket() {
 			return
 		}
 
-		go d.execTask(string(message))
+		d.execTask(string(message))
 	}
 }
 

@@ -48,8 +48,8 @@ func (t *Deployer) Run() error {
 			return err
 		}
 	}
-	t.reportResult(apiResultData.ReportResultApi, nil)
 	util.Logger.Info("Succeed to run all deploy task.")
+	t.reportResult(apiResultData.ReportResultApi, nil)
 	return nil
 }
 
