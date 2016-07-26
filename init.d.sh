@@ -26,30 +26,30 @@
 # Check that networking is up.
 [ "$NETWORKING" = "no" ] && exit
 exec="/usr/sbin/ok_agent"
-prog=$(basename $exec)
-
+prog=$(basename ${exec})
 lockfile=/var/lock/subsys/ok_agent
+pidfile=/var/run/ok_agent.pid
 
 start() {
-    [ -x $exec ] || exit 5
+    [ -x ${exec} ] || exit 5
     echo -n $"Starting $prog: "
     # if not running, start it up here, usually something like "daemon $exec"
 
-    daemon /usr/sbin/daemonize $exec
+    daemon /usr/sbin/daemonize -l ${lockfile} -p ${pidfile} ${exec}
     retval=$?
     echo
-    [ $retval -eq 0 ] && touch $lockfile
-    return $retval
+    [ ${retval} -eq 0 ] && touch ${lockfile}
+    return ${retval}
 }
 
 stop() {
     echo -n $"Stopping $prog: "
     # stop it here, often "killproc $prog"
-    killproc $prog -INT
+    killproc ${prog} -INT
     retval=$?
     echo
-    [ $retval -eq 0 ] && rm -f $lockfile
-    return $retval
+    [ ${retval} -eq 0 ] && rm -f ${lockfile} && rm -f ${pidfile}
+    return ${retval}
 }
 
 restart() {
@@ -67,7 +67,7 @@ force_reload() {
 
 rh_status() {
     # run checks to determine if the service is running or use generic status
-    status $prog
+    status ${prog}
 }
 
 rh_status_q() {
