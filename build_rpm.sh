@@ -59,11 +59,13 @@ mkdir -p \$RPM_BUILD_ROOT/root/.ok_agent
 
 install -m 755 ok_agent        \$RPM_BUILD_ROOT/usr/sbin/ok_agent
 install -m 755 ok_agent.json   \$RPM_BUILD_ROOT/etc/ok_agent.json
+install -m 755 init.d.sh       \$RPM_BUILD_ROOT/etc/init.d/ok_agent
 install -m 400 credential.json \$RPM_BUILD_ROOT/root/.ok_agent/credential.json
 
 %files
 /usr/sbin/ok_agent
 /etc/ok_agent.json
+/etc/init.d/ok_agent
 
 %config /root/.ok_agent/credential.json
 
