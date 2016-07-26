@@ -15,6 +15,7 @@ type SysInfoReporter struct {
 
 func (t *SysInfoReporter) Run() error {
 	util.Logger.Info("Calling sys info report api")
+	t.Params = &api.SysInfoParam{}
 	if err := t.setCpu(); err != nil {
 		return err
 	}
@@ -60,7 +61,7 @@ func (t *SysInfoReporter) setHostname() error {
 }
 
 func (t *SysInfoReporter) setIp() error {
-	t.Params.Hostname = "172.16.0.1,192.168.0.1"
+	t.Params.Ip = "172.16.0.1,192.168.0.1"
 	return nil
 }
 

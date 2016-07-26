@@ -10,5 +10,5 @@ type Updater struct {
 
 func (t *Updater) Run() error {
 	deployer := &Deployer{}
-	return deployer.processDynamicApi(t.Api)
+	return deployer.processDynamicApi(*t.Api)
 }
