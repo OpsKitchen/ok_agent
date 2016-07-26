@@ -63,12 +63,11 @@ func (t *SysInfoReporter) getIp() []string {
 		return ipv4List
 	}
 	for _, netInterface := range interfaces {
-		if netInterface.Flags&net.FlagLoopback != 0 {
+		if netInterface.Flags&net.FlagBroadcast == 0 {
 			continue
 		}
 		addressList, _ := netInterface.Addrs()
 		for _, address := range addressList {
-			util.Logger.Debug("string: ", address.String())
 			ipv4List = append(ipv4List, strings.Split(address.String(), "/")[0])
 			break
 		}
