@@ -5,34 +5,25 @@ import (
 	"github.com/OpsKitchen/ok_agent/model/api"
 	"github.com/OpsKitchen/ok_agent/model/api/returndata"
 	"github.com/OpsKitchen/ok_agent/util"
+	"net"
 	"os"
+	"strings"
 )
 
 type SysInfoReporter struct {
-	Api    *returndata.DynamicApi
-	Params *api.SysInfoParam
+	Api *returndata.DynamicApi
 }
 
 func (t *SysInfoReporter) Run() error {
 	util.Logger.Info("Calling sys info report api")
-	t.Params = &api.SysInfoParam{}
-	if err := t.setCpu(); err != nil {
-		return err
-	}
-	if err := t.setHostname(); err != nil {
-		return err
-	}
-	if err := t.setIp(); err != nil {
-		return err
-	}
-	if err := t.setMachineType(); err != nil {
-		return err
-	}
-	if err := t.setMemory(); err != nil {
-		return err
-	}
+	params := &api.SysInfoParam{}
+	params.Cpu = t.getCpu()
+	params.Hostname = t.getHostname()
+	params.Ip = t.getIp()
+	params.MachineType = t.getMachineType()
+	params.Memory = t.getMemory()
 
-	reportResult, err := util.ApiClient.CallApi(t.Api.Name, t.Api.Version, t.Params)
+	reportResult, err := util.ApiClient.CallApi(t.Api.Name, t.Api.Version, params)
 	if err != nil {
 		util.Logger.Error("Failed to call sys info report api: " + t.Api.Name + "\t" + t.Api.Version)
 		return err
@@ -46,31 +37,49 @@ func (t *SysInfoReporter) Run() error {
 	return nil
 }
 
-func (t *SysInfoReporter) setCpu() error {
-	t.Params.Cpu = 1
-	return nil
+func (t *SysInfoReporter) getCpu() int {
+	return 1
 }
 
-func (t *SysInfoReporter) setHostname() error {
+func (t *SysInfoReporter) getHostname() string {
 	hostname, err := os.Hostname()
 	if err != nil {
-		return err
+		util.Logger.Error("Failed to get hostname: " + err.Error())
+		return ""
 	}
-	t.Params.Hostname = hostname
-	return nil
+	return hostname
 }
 
-func (t *SysInfoReporter) setIp() error {
-	t.Params.Ip = "172.16.0.1,192.168.0.1"
-	return nil
+func (t *SysInfoReporter) getIp() string {
+	var ipv4List []string
+	interfaces, err := net.Interfaces()
+	if err != nil {
+		util.Logger.Error("Failed to get net address list: " + err.Error())
+		return ""
+	}
+	if len(interfaces) < 2 {
+		errMsg := "task: amount of net address is less than 2"
+		util.Logger.Error(errMsg)
+		return ""
+	}
+	for _, netInterface := range interfaces {
+		if netInterface.Flags&net.FlagLoopback != 0 {
+			continue
+		}
+		addressList, _ := netInterface.Addrs()
+		for _, address := range addressList {
+			util.Logger.Debug("string: ", address.String())
+			ipv4List = append(ipv4List, strings.Split(address.String(), "/")[0])
+			break
+		}
+	}
+	return strings.Join(ipv4List, ",")
 }
 
-func (t *SysInfoReporter) setMachineType() error {
-	t.Params.MachineType = "virtual"
-	return nil
+func (t *SysInfoReporter) getMachineType() string {
+	return "virtual"
 }
 
-func (t *SysInfoReporter) setMemory() error {
-	t.Params.Memory = 1024
-	return nil
+func (t *SysInfoReporter) getMemory() int {
+	return 1024
 }
