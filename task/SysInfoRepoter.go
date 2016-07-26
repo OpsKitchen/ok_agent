@@ -50,17 +50,17 @@ func (t *SysInfoReporter) getHostname() string {
 	return hostname
 }
 
-func (t *SysInfoReporter) getIp() string {
+func (t *SysInfoReporter) getIp() []string {
 	var ipv4List []string
 	interfaces, err := net.Interfaces()
 	if err != nil {
 		util.Logger.Error("Failed to get net address list: " + err.Error())
-		return ""
+		return ipv4List
 	}
 	if len(interfaces) < 2 {
 		errMsg := "task: amount of net address is less than 2"
 		util.Logger.Error(errMsg)
-		return ""
+		return ipv4List
 	}
 	for _, netInterface := range interfaces {
 		if netInterface.Flags&net.FlagLoopback != 0 {
@@ -73,7 +73,7 @@ func (t *SysInfoReporter) getIp() string {
 			break
 		}
 	}
-	return strings.Join(ipv4List, ",")
+	return ipv4List
 }
 
 func (t *SysInfoReporter) getMachineType() string {
