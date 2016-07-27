@@ -35,6 +35,9 @@ func (item *Command) Brief() string {
 	if item.User != "" {
 		brief += "\n\t\tUser: \t\t" + item.User
 	}
+	if item.Path != "" {
+		brief += "\n\t\tPath: \t\t" + item.Path
+	}
 	if item.RunIf != "" {
 		brief += "\n\t\tRun if: \t" + item.RunIf
 	}
