@@ -54,7 +54,7 @@ This is the linux agent for OpsKitchen.com
 %install
 rm -rf \$RPM_BUILD_ROOT
 mkdir -p \$RPM_BUILD_ROOT/usr/sbin
-mkdir -p \$RPM_BUILD_ROOT/etc
+mkdir -p \$RPM_BUILD_ROOT/etc/init.d
 mkdir -p \$RPM_BUILD_ROOT/root/.ok_agent
 
 install -m 755 ok_agent        \$RPM_BUILD_ROOT/usr/sbin/ok_agent
