@@ -7,6 +7,7 @@ import (
 	"github.com/OpsKitchen/ok_agent/task"
 	"github.com/OpsKitchen/ok_agent/util"
 	"github.com/gorilla/websocket"
+	"io/ioutil"
 	"time"
 )
 
@@ -26,7 +27,7 @@ func (d *Dispatcher) Dispatch() {
 		return
 	}
 	if result.Success == false {
-		errMsg := "Entrance api return error: " + result.ErrorCode + "\t" + result.ErrorMessage
+		errMsg := "Entrance api return error: " + result.ErrorCode + ": " + result.ErrorMessage
 		util.Logger.Error(errMsg)
 		return
 	}
@@ -40,9 +41,11 @@ func (d *Dispatcher) Dispatch() {
 }
 
 func (d *Dispatcher) listenWebSocket() {
-	conn, _, err := websocket.DefaultDialer.Dial(d.EntranceApiResult.WebSocketUrl, nil)
+	conn, resp, err := websocket.DefaultDialer.Dial(d.EntranceApiResult.WebSocketUrl, nil)
+	defer resp.Body.Close()
 	if err != nil {
-		util.Logger.Error("Failed to connect to web socket server: " + err.Error())
+		bytes, _ := ioutil.ReadAll(resp.Body)
+		util.Logger.Error("Failed to connect to web socket server: " + resp.Status + "\t" + string(bytes))
 		return
 	}
 	util.Logger.Info("Web socket server connected, waiting for task...")
