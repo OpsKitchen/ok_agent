@@ -8,7 +8,6 @@ import (
 	"github.com/OpsKitchen/ok_agent/util"
 	"github.com/gorilla/websocket"
 	"io/ioutil"
-	"time"
 )
 
 type Dispatcher struct {
@@ -54,11 +53,10 @@ func (d *Dispatcher) listenWebSocket() {
 		_, message, err := conn.ReadMessage()
 		if err != nil {
 			if websocket.IsUnexpectedCloseError(err, websocket.CloseNormalClosure) {
-				util.Logger.Debug("Connection breaks abnormally: " + err.Error())
+				util.Logger.Debug("Connection closed abnormally: " + err.Error())
 			} else {
 				//server sent 1000 error code (websocket.CloseNormalClosure)
-				util.Logger.Debug("Server sends me close frame: " + err.Error())
-				time.Sleep(10 * time.Second)
+				util.Logger.Debug("Server sends me close message: " + err.Error())
 			}
 			return
 		}
