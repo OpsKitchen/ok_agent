@@ -9,9 +9,9 @@ if [ -z $GOPATH ]; then
     exit 1
 fi
 
-prod_name="ok_agent"
-src_dir="/root/rpmbuild/SOURCES"
 cwd=`pwd`
+prod_name=`basename ${cwd}`
+src_dir="/root/rpmbuild/SOURCES"
 version=`grep AgentVersion ok_agent.json | awk -F '"' '{print $4}'`
 prod_name_with_version=${prod_name}-${version}
 src_tar_gz=${prod_name_with_version}.tar.gz
