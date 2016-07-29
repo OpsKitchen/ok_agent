@@ -45,7 +45,7 @@ func (d *Dispatcher) listenWebSocket() {
 	defer resp.Body.Close()
 	if err != nil {
 		bytes, _ := ioutil.ReadAll(resp.Body)
-		util.Logger.Error("Failed to connect to web socket server: " + resp.Status + "\t" + string(bytes))
+		util.Logger.Error("Failed to connect to web socket server: " + resp.Status + ": " + string(bytes))
 		return
 	}
 	util.Logger.Info("Web socket server connected, waiting for task...")

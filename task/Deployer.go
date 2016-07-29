@@ -23,7 +23,7 @@ func (t *Deployer) Run() error {
 		return err
 	}
 	if result.Success == false {
-		errMsg := "deploy api return error: " + result.ErrorCode + "\t" + result.ErrorMessage
+		errMsg := "deploy api return error: " + result.ErrorCode + ": " + result.ErrorMessage
 		util.Logger.Error(errMsg)
 		return errors.New(errMsg)
 	}
@@ -60,11 +60,11 @@ func (t *Deployer) processDynamicApi(dynamicApi returndata.DynamicApi) error {
 	//call dynamic api
 	result, err := util.ApiClient.CallApi(dynamicApi.Name, dynamicApi.Version, nil)
 	if err != nil {
-		util.Logger.Error("Failed to call api: " + dynamicApi.Name + "\t" + dynamicApi.Version)
+		util.Logger.Error("Failed to call api: " + dynamicApi.Name + ": " + dynamicApi.Version)
 		return err
 	}
 	if result.Success == false {
-		errMsg := "api return error: " + result.ErrorCode + "\t" + result.ErrorMessage
+		errMsg := "api return error: " + result.ErrorCode + ": " + result.ErrorMessage
 		util.Logger.Error(errMsg)
 		return errors.New(errMsg)
 	}
@@ -117,7 +117,7 @@ func (t *Deployer) processDynamicApi(dynamicApi returndata.DynamicApi) error {
 			return errors.New(errMsg)
 		}
 	} //end for "range apiResultData"
-	util.Logger.Info("Succeed to process dynamic api: ", dynamicApi.Name+"\t"+dynamicApi.Version)
+	util.Logger.Info("Succeed to process dynamic api: ", dynamicApi.Name+": "+dynamicApi.Version)
 	return nil
 }
 
@@ -135,6 +135,6 @@ func (t *Deployer) reportResult(api returndata.DynamicApi, err error) {
 		return
 	}
 	if result.Success == false {
-		util.Logger.Error("Result report api return error: " + result.ErrorCode + "\t" + result.ErrorMessage)
+		util.Logger.Error("Result report api return error: " + result.ErrorCode + ": " + result.ErrorMessage)
 	}
 }
