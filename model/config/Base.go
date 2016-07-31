@@ -9,5 +9,4 @@ type Base struct {
 	EntranceApiVersion string
 	GatewayHost        string
 	LogDir             string
-	LogLevel           string
 }
