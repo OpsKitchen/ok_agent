@@ -41,12 +41,17 @@ func (d *Dispatcher) Dispatch() {
 
 func (d *Dispatcher) listenWebSocket() {
 	conn, resp, err := websocket.DefaultDialer.Dial(d.EntranceApiResult.WebSocketUrl, nil)
-	defer resp.Body.Close()
 	if err != nil {
-		bytes, _ := ioutil.ReadAll(resp.Body)
-		util.Logger.Error("Failed to connect to web socket server: " + resp.Status + ": " + string(bytes))
+		if resp != nil && resp.Body != nil {
+			defer resp.Body.Close()
+			bytes, _ := ioutil.ReadAll(resp.Body)
+			util.Logger.Error("Failed to handshake with web socket server: " + resp.Status + ": " + string(bytes))
+		} else {
+			util.Logger.Error("Failed to dial to web socket server: " + err.Error())
+		}
 		return
 	}
+
 	util.Logger.Info("Web socket server connected, waiting for task...")
 	defer conn.Close()
 	for {
