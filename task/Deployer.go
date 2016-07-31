@@ -6,6 +6,11 @@ import (
 	"github.com/OpsKitchen/ok_agent/model/api/returndata"
 	"github.com/OpsKitchen/ok_agent/util"
 	"github.com/OpsKitchen/ok_api_sdk_go/sdk/model"
+	"io"
+	"io/ioutil"
+	"os"
+	"strconv"
+	"time"
 )
 
 type Deployer struct {
@@ -13,10 +18,12 @@ type Deployer struct {
 }
 
 func (t *Deployer) Run() error {
+	mainLogFileHandle := util.Logger.Out
 	util.Logger.Info("Calling deploy api")
 	var result *model.ApiResult
 	var apiResultData returndata.DeployApi
 
+	//call deploy api
 	result, err := util.ApiClient.CallApi(t.Api.Name, t.Api.Version, nil)
 	if err != nil {
 		util.Logger.Debug("Failed to call deploy api.")
@@ -38,19 +45,35 @@ func (t *Deployer) Run() error {
 		util.Logger.Error(errMsg)
 		return errors.New(errMsg)
 	}
+
+	//change log file to tmp file
+	tmpLogFileName := "/tmp/" + strconv.FormatInt(time.Now().UnixNano(), 10)
+	tmpLogFileHandle, err := os.OpenFile(tmpLogFileName, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
+	if err != nil {
+		errMsg := "Failed to create log file [" + tmpLogFileName + "]: " + err.Error()
+		util.Logger.Error(errMsg)
+		return errors.New(errMsg)
+	}
+	defer func() {
+		io.Copy(mainLogFileHandle, tmpLogFileHandle)
+		util.Logger.Out = mainLogFileHandle
+		tmpLogFileHandle.Close()
+	}()
+	util.Logger.Out = tmpLogFileHandle
 	util.Logger.Info("Succeed to call deploy api.")
 	util.Logger.Info("Product version: " + apiResultData.ProductVersion)
 	util.Logger.Info("Server name: " + apiResultData.ServerName)
 
+	//call dynamic api
 	for _, dynamicApi := range apiResultData.ApiList {
 		if err := t.processDynamicApi(dynamicApi); err != nil {
-			t.reportResult(apiResultData.ReportResultApi, err)
-			return err
+			return t.reportResult(apiResultData.ReportResultApi, err, tmpLogFileHandle)
+			break
 		}
 	}
-	util.Logger.Info("Succeed to run all deploy task.")
-	t.reportResult(apiResultData.ReportResultApi, nil)
-	return nil
+
+	//report successful result
+	return t.reportResult(apiResultData.ReportResultApi, nil, tmpLogFileHandle)
 }
 
 func (t *Deployer) processDynamicApi(dynamicApi returndata.DynamicApi) error {
@@ -121,20 +144,26 @@ func (t *Deployer) processDynamicApi(dynamicApi returndata.DynamicApi) error {
 	return nil
 }
 
-func (t *Deployer) reportResult(api returndata.DynamicApi, err error) {
+func (t *Deployer) reportResult(api returndata.DynamicApi, err error, tmpLogFileHandle io.Reader) error {
 	param := &model.ApiResult{}
 	if err != nil {
 		param.ErrorMessage = err.Error()
-		param.Data = "" //@todo read error log from file
 	} else {
 		param.Success = true
 	}
+	//read tmp log content as result data
+	logMsg, _ := ioutil.ReadAll(tmpLogFileHandle)
+	param.Data = logMsg
+
 	result, err := util.ApiClient.CallApi(api.Name, api.Version, param)
 	if err != nil {
 		util.Logger.Error("Failed to call result report api: ", api.Name, api.Version)
-		return
+		return err
 	}
 	if result.Success == false {
-		util.Logger.Error("Result report api return error: " + result.ErrorCode + ": " + result.ErrorMessage)
+		errMsg := "Result report api return error: " + result.ErrorCode + ": " + result.ErrorMessage
+		util.Logger.Error(errMsg)
+		return errors.New(errMsg)
 	}
+	return nil
 }
