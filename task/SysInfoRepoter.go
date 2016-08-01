@@ -10,6 +10,12 @@ import (
 	"strings"
 )
 
+const (
+	machineTypePhysical  = "physical"
+	machineTypeVirtual   = "virtual"
+	machineTypeContainer = "container"
+)
+
 type SysInfoReporter struct {
 	Api *returndata.DynamicApi
 }
@@ -76,7 +82,7 @@ func (t *SysInfoReporter) getIp() []string {
 }
 
 func (t *SysInfoReporter) getMachineType() string {
-	return "virtual"
+	return machineTypePhysical
 }
 
 func (t *SysInfoReporter) getMemory() int {

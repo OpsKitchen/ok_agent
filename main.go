@@ -44,8 +44,7 @@ func main() {
 	util.PrepareApiClient()
 
 	//dispatch
-	d := &Dispatcher{}
-	for {
+	for d := new(Dispatcher); ; {
 		d.Dispatch()
 		time.Sleep(2 * time.Second)
 	}
