@@ -13,7 +13,7 @@ var ApiClient = sdk.NewClient()
 var ApiLogger = logrus.New()
 var Logger = &logrus.Logger{
 	Out:       os.Stderr,
-	Formatter: &logrus.JSONFormatter{},
+	Formatter: &logrus.TextFormatter{DisableColors: false},
 	Hooks:     make(logrus.LevelHooks),
 	Level:     logrus.InfoLevel,
 }
