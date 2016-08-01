@@ -18,7 +18,6 @@ type Deployer struct {
 }
 
 func (t *Deployer) Run() error {
-	mainLogFileHandle := util.Logger.Out
 	util.Logger.Info("Calling deploy api")
 	var result *model.ApiResult
 	var apiResultData returndata.DeployApi
@@ -47,19 +46,22 @@ func (t *Deployer) Run() error {
 	}
 
 	//change log file to tmp file
-	tmpLogFileName := "/tmp/" + strconv.FormatInt(time.Now().UnixNano(), 10)
-	tmpLogFileHandle, err := os.OpenFile(tmpLogFileName, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
+	tmpLogFileName := "/tmp/ok_agent-" + strconv.FormatInt(time.Now().UnixNano(), 10) + ".log"
+	tmpLogFileHandle, err := os.OpenFile(tmpLogFileName, os.O_RDWR|os.O_CREATE, 0666)
 	if err != nil {
 		errMsg := "Failed to create log file [" + tmpLogFileName + "]: " + err.Error()
 		util.Logger.Error(errMsg)
 		return errors.New(errMsg)
 	}
+
+	mainLogFileHandle := util.Logger.Out
+	util.Logger.Out = tmpLogFileHandle
 	defer func() {
 		io.Copy(mainLogFileHandle, tmpLogFileHandle)
 		util.Logger.Out = mainLogFileHandle
 		tmpLogFileHandle.Close()
+		os.Remove(tmpLogFileName)
 	}()
-	util.Logger.Out = tmpLogFileHandle
 	util.Logger.Info("Succeed to call deploy api.")
 	util.Logger.Info("Product version: " + apiResultData.ProductVersion)
 	util.Logger.Info("Server name: " + apiResultData.ServerName)
@@ -145,7 +147,7 @@ func (t *Deployer) processDynamicApi(dynamicApi returndata.DynamicApi) error {
 	return nil
 }
 
-func (t *Deployer) reportResult(api returndata.DynamicApi, err error, tmpLogFileHandle io.Reader) error {
+func (t *Deployer) reportResult(api returndata.DynamicApi, err error, tmpLogFileHandle *os.File) error {
 	param := &model.ApiResult{}
 	if err != nil {
 		param.ErrorMessage = err.Error()
@@ -154,13 +156,14 @@ func (t *Deployer) reportResult(api returndata.DynamicApi, err error, tmpLogFile
 	}
 	//read tmp log content as result data
 	if tmpLogFileHandle != nil {
-		logMsg, _ := ioutil.ReadAll(tmpLogFileHandle)
+		util.ApiLogger.Debug(tmpLogFileHandle)
+		logMsg, _ := ioutil.ReadFile(tmpLogFileHandle.Name())
 		param.Data = string(logMsg)
 	}
 
 	result, err := util.ApiClient.CallApi(api.Name, api.Version, param)
 	if err != nil {
-		util.Logger.Error("Failed to call result report api: " + api.Name + ": " +  api.Version)
+		util.Logger.Error("Failed to call result report api: " + api.Name + ": " + api.Version)
 		return err
 	}
 	if result.Success == false {
