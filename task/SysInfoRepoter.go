@@ -1,12 +1,16 @@
 package task
 
 import (
+	"encoding/json"
 	"errors"
 	"github.com/OpsKitchen/ok_agent/model/api"
 	"github.com/OpsKitchen/ok_agent/model/api/returndata"
+	"github.com/OpsKitchen/ok_agent/model/config"
 	"github.com/OpsKitchen/ok_agent/util"
+	"io/ioutil"
 	"net"
 	"os"
+	"path"
 	"strings"
 )
 
@@ -21,14 +25,21 @@ type SysInfoReporter struct {
 }
 
 func (t *SysInfoReporter) Run() error {
-	util.Logger.Info("Calling sys info report api")
+	cacheFile := path.Dir(config.B.CredentialFile) + "/" + "sys_info.json"
+	cachedBytes, _ := ioutil.ReadFile(cacheFile)
+
 	params := &api.SysInfoParam{}
 	params.Cpu = t.getCpu()
 	params.Hostname = t.getHostname()
 	params.Ip = t.getIp()
 	params.MachineType = t.getMachineType()
 	params.Memory = t.getMemory()
+	bytes, _ := json.Marshal(params)
+	if string(cachedBytes) == string(bytes) {
+		return nil
+	}
 
+	util.Logger.Info("Calling sys info report api")
 	reportResult, err := util.ApiClient.CallApi(t.Api.Name, t.Api.Version, params)
 	if err != nil {
 		util.Logger.Error("Failed to call sys info report api: " + t.Api.Name + ": " + t.Api.Version)
@@ -40,6 +51,7 @@ func (t *SysInfoReporter) Run() error {
 		return errors.New(errMsg)
 	}
 	util.Logger.Info("Succeed to call sys info report api.")
+	ioutil.WriteFile(cacheFile, bytes, 0600)
 	return nil
 }
 
