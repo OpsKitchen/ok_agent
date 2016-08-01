@@ -57,7 +57,8 @@ func (t *Deployer) Run() error {
 	mainLogFileHandle := util.Logger.Out
 	util.Logger.Out = tmpLogFileHandle
 	defer func() {
-		io.Copy(mainLogFileHandle, tmpLogFileHandle)
+		tmpReader, _ := os.Open(tmpLogFileName)
+		io.Copy(mainLogFileHandle, tmpReader)
 		util.Logger.Out = mainLogFileHandle
 		tmpLogFileHandle.Close()
 		os.Remove(tmpLogFileName)
@@ -156,7 +157,6 @@ func (t *Deployer) reportResult(api returndata.DynamicApi, err error, tmpLogFile
 	}
 	//read tmp log content as result data
 	if tmpLogFileHandle != nil {
-		util.ApiLogger.Debug(tmpLogFileHandle)
 		logMsg, _ := ioutil.ReadFile(tmpLogFileHandle.Name())
 		param.Data = string(logMsg)
 	}
