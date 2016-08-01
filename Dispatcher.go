@@ -11,16 +11,13 @@ import (
 )
 
 type Dispatcher struct {
-	Config            *config.Base
-	Credential        *config.Credential
 	EntranceApiResult returndata.EntranceApi
 }
 
 func (d *Dispatcher) Dispatch() {
 	util.Logger.Info("Calling entrance api")
-	param := &api.EntranceApiParam{ServerUniqueName: d.Credential.ServerUniqueName}
-	result, err := util.ApiClient.CallApi(d.Config.EntranceApiName,
-		d.Config.EntranceApiVersion, param)
+	param := &api.EntranceApiParam{ServerUniqueName: config.C.ServerUniqueName}
+	result, err := util.ApiClient.CallApi(config.B.EntranceApiName, config.B.EntranceApiVersion, param)
 	if err != nil {
 		util.Logger.Error("Failed to call entrance api.")
 		return
