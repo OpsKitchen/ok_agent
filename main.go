@@ -26,12 +26,12 @@ func main() {
 	}
 
 	//prepare config
-	if err := config.ParseBaseConfig(*baseConfigFile); err != nil {
+	if err := util.ParseJsonFile(*baseConfigFile, config.B); err != nil {
 		util.Logger.Fatal("Failed to parse base config file: " + err.Error())
 	}
 
 	//prepare credential
-	if err := config.ParseCredential(); err != nil {
+	if err := util.ParseJsonFile(config.B.CredentialFile, config.C); err != nil {
 		util.Logger.Fatal("Failed to parse base config file: " + err.Error())
 	}
 
