@@ -4,9 +4,7 @@ import (
 	"flag"
 	"github.com/OpsKitchen/ok_agent/model/config"
 	"github.com/OpsKitchen/ok_agent/util"
-	"github.com/OpsKitchen/ok_api_sdk_go/sdk"
 	"github.com/Sirupsen/logrus"
-	"os"
 	"time"
 )
 
@@ -38,29 +36,12 @@ func main() {
 	}
 
 	//check log dir
-	if _, err := os.Stat(config.B.LogDir); err != nil { //log dir not exists
-		if os.MkdirAll(config.B.LogDir, 0755) != nil {
-			util.Logger.Fatal("Failed to create log dir [" + config.B.LogDir + "]: " + err.Error())
-		}
+	if err := util.PrepareLogFile(); err != nil {
+		util.Logger.Fatal("Failed to prepare log file: " + err.Error())
 	}
-	logFileName := config.B.LogDir + "/info.log"
-	var fileHandle *os.File
-	if _, err := os.Stat(logFileName); err != nil { //log file not exists
-		if fileHandle, err = os.OpenFile(logFileName, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666); err != nil {
-			util.Logger.Fatal("Failed to create log file [" + logFileName + "]: " + err.Error())
-		}
-	} else if fileHandle, err = os.OpenFile(logFileName, os.O_WRONLY|os.O_APPEND, 0666); err != nil {
-		util.Logger.Fatal("Failed to open log file [" + logFileName + "] for writing: " + err.Error())
-	}
-	defer fileHandle.Close()
-	util.Logger.Out = fileHandle
-	util.Logger.Info("Version: " + config.B.AgentVersion)
 
 	//prepare api client
-	sdk.SetDefaultLogger(util.ApiLogger)
-	util.ApiClient.RequestBuilder.Config.SetDisableSSL(config.B.DisableSSL).SetGatewayHost(config.B.GatewayHost).
-		SetAppMarketIdValue(config.B.AppMarketId).SetAppVersionValue(config.B.AgentVersion)
-	util.ApiClient.RequestBuilder.Credential.SetAppKey(config.C.AppKey).SetSecret(config.C.Secret)
+	util.PrepareApiClient()
 
 	//dispatch
 	d := &Dispatcher{}
