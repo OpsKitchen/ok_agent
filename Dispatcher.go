@@ -33,6 +33,7 @@ func (d *Dispatcher) Dispatch() {
 	}
 	result.ConvertDataTo(&d.EntranceApiResult)
 	util.Logger.Info("Succeed to call entrance api.")
+	d.reportSysInfo()
 	d.listenWebSocket()
 }
 
@@ -76,8 +77,7 @@ func (d *Dispatcher) execTask(msg string) {
 
 	case task.FlagReportSysInfo:
 		util.Logger.Info("Received report sys info task.")
-		reporter := &task.SysInfoReporter{Api: d.EntranceApiResult.ReportSysInfoApi}
-		reporter.Run()
+		d.reportSysInfo()
 
 	case task.FlagUpdateAgent:
 		util.Logger.Info("Received update agent task.")
@@ -88,4 +88,9 @@ func (d *Dispatcher) execTask(msg string) {
 		errMsg := "Unsupported task: " + msg
 		util.Logger.Error(errMsg)
 	}
+}
+
+func (d *Dispatcher) reportSysInfo() {
+	reporter := &task.SysInfoReporter{Api: d.EntranceApiResult.ReportSysInfoApi}
+	reporter.Run()
 }
