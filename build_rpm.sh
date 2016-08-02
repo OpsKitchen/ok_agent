@@ -12,7 +12,7 @@ fi
 cwd=`pwd`
 prod_name=`basename ${cwd}`
 src_dir="/root/rpmbuild/SOURCES"
-version=`grep AgentVersion ok_agent.json | awk -F '"' '{print $4}'`
+version=`grep AgentVersion ./model/config/config.go | awk -F '"' '{print $2}'`
 prod_name_with_version=${prod_name}-${version}
 src_tar_gz=${prod_name_with_version}.tar.gz
 spec_file=${src_dir}/${prod_name}-${version}.spec
@@ -58,13 +58,11 @@ mkdir -p \$RPM_BUILD_ROOT/etc/init.d
 mkdir -p \$RPM_BUILD_ROOT/root/.ok_agent
 
 install -m 755 ok_agent        \$RPM_BUILD_ROOT/usr/sbin/ok_agent
-install -m 755 ok_agent.json   \$RPM_BUILD_ROOT/etc/ok_agent.json
 install -m 755 init.d.sh       \$RPM_BUILD_ROOT/etc/init.d/ok_agent
 install -m 400 credential.json \$RPM_BUILD_ROOT/root/.ok_agent/credential.json
 
 %files
 /usr/sbin/ok_agent
-/etc/ok_agent.json
 /etc/init.d/ok_agent
 
 %config /root/.ok_agent/credential.json
