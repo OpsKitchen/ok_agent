@@ -26,7 +26,8 @@ type SysInfoReporter struct {
 
 func (t *SysInfoReporter) Run() error {
 	cacheFile := path.Dir(config.B.CredentialFile) + "/" + "sys_info.json"
-	cachedBytes, _ := ioutil.ReadFile(cacheFile)
+	cachedParam := &api.SysInfoParam{}
+	util.ParseJsonFile(cacheFile, cachedParam)
 
 	params := &api.SysInfoParam{}
 	params.Cpu = t.getCpu()
@@ -35,7 +36,8 @@ func (t *SysInfoReporter) Run() error {
 	params.MachineType = t.getMachineType()
 	params.Memory = t.getMemory()
 	bytes, _ := json.Marshal(params)
-	if string(cachedBytes) == string(bytes) {
+	if params.Equals(cachedParam) {
+		util.Logger.Debug("sys into not changed")
 		return nil
 	}
 
