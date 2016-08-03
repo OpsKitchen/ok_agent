@@ -1,7 +1,7 @@
 package config
 
 var B = &Base{
-	AgentVersion:       "1.1.1",
+	AgentVersion:       "2.0.0",
 	AppMarketId:        "520",
 	CredentialFile:     "/root/.ok_agent/credential.json",
 	EntranceApiName:    "ops.agent.entrance",
