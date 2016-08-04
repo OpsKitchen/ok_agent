@@ -19,6 +19,11 @@ var Logger = &logrus.Logger{
 	Level:     logrus.InfoLevel,
 }
 
+func FileExist(file string) bool {
+	_, err := os.Stat(file)
+	return err == nil
+}
+
 func JsonConvert(fromPointer interface{}, toPointer interface{}) error {
 	byteArray, err := json.Marshal(fromPointer)
 	if err != nil {
@@ -34,13 +39,9 @@ func JsonConvert(fromPointer interface{}, toPointer interface{}) error {
 }
 
 func ParseJsonFile(file string, out interface{}) error {
-	if _, err := os.Stat(file); err != nil {
-		return errors.New("util: file not found: " + err.Error())
-	}
-
 	jsonBytes, err := ioutil.ReadFile(file)
 	if err != nil {
-		return errors.New("util: file not readable: " + err.Error())
+		return errors.New("util: can not read file: " + err.Error())
 	}
 
 	if err = json.Unmarshal(jsonBytes, out); err != nil {

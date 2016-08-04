@@ -26,26 +26,30 @@ func main() {
 	}
 
 	//prepare config
-	if err := util.ParseJsonFile(*baseConfigFile, config.B); err != nil {
-		util.Logger.Fatal("Failed to parse base config file: " + err.Error())
+	if util.FileExist(*baseConfigFile) {
+		if err := util.ParseJsonFile(*baseConfigFile, config.B); err != nil {
+			util.Logger.Fatal("can not parse base config file: " + err.Error())
+		}
 	}
 
 	//prepare credential
+	if !util.FileExist(config.B.CredentialFile) {
+		util.Logger.Fatal("credential file not found.")
+	}
 	if err := util.ParseJsonFile(config.B.CredentialFile, config.C); err != nil {
-		util.Logger.Fatal("Failed to parse base config file: " + err.Error())
+		util.Logger.Fatal("credential file pasring error: " + err.Error())
 	}
 
 	//check log dir
 	if err := util.PrepareLogFile(); err != nil {
-		util.Logger.Fatal("Failed to prepare log file: " + err.Error())
+		util.Logger.Fatal("can not open or create log file: " + err.Error())
 	}
 
 	//prepare api client
 	util.PrepareApiClient()
 
 	//dispatch
-	for d := new(Dispatcher); ; {
+	for d := new(Dispatcher); ; time.Sleep(2 * time.Second) {
 		d.Dispatch()
-		time.Sleep(2 * time.Second)
 	}
 }
