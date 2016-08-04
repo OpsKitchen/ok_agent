@@ -11,6 +11,7 @@ import (
 	"net"
 	"os"
 	"path"
+	"reflect"
 	"strings"
 )
 
@@ -36,7 +37,7 @@ func (t *SysInfoReporter) Run() error {
 	params.MachineType = t.getMachineType()
 	params.Memory = t.getMemory()
 	bytes, _ := json.Marshal(params)
-	if params.Equals(cachedParam) {
+	if reflect.DeepEqual(params, cachedParam) {
 		util.Logger.Debug("sys into not changed")
 		return nil
 	}
