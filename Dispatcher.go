@@ -19,7 +19,7 @@ func (d *Dispatcher) Dispatch() {
 	param := &api.EntranceApiParam{ServerUniqueName: config.C.ServerUniqueName}
 	result, err := util.ApiClient.CallApi(config.B.EntranceApiName, config.B.EntranceApiVersion, param)
 	if err != nil {
-		util.Logger.Error("Failed to call entrance api.")
+		util.Logger.Error("Failed to call entrance api: " + err.Error())
 		return
 	}
 	if result.Success == false {
