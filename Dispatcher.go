@@ -23,8 +23,7 @@ func (d *Dispatcher) Dispatch() {
 		return
 	}
 	if result.Success == false {
-		errMsg := "Entrance api return error: " + result.ErrorCode + ": " + result.ErrorMessage
-		util.Logger.Error(errMsg)
+		util.Logger.Error("Entrance api return error: " + result.ErrorCode + ": " + result.ErrorMessage)
 		return
 	}
 	if result.Data == nil {

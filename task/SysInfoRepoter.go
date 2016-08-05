@@ -38,15 +38,15 @@ func (t *SysInfoReporter) Run() error {
 	params.Memory = t.getMemory()
 	bytes, _ := json.Marshal(params)
 	if reflect.DeepEqual(params, cachedParam) {
-		util.Logger.Debug("sys into not changed")
 		return nil
 	}
 
 	util.Logger.Info("Calling sys info report api")
 	reportResult, err := util.ApiClient.CallApi(t.Api.Name, t.Api.Version, params)
 	if err != nil {
-		util.Logger.Error("Failed to call sys info report api: " + t.Api.Name + ": " + t.Api.Version)
-		return err
+		errMsg := "Failed to call sys info report api: " + t.Api.Name + ": " + t.Api.Version + ": " + err.Error()
+		util.Logger.Error(errMsg)
+		return errors.New(errMsg)
 	}
 	if reportResult.Success == false {
 		errMsg := "api return error: " + reportResult.ErrorCode + ": " + reportResult.ErrorMessage

@@ -25,8 +25,9 @@ func (t *Deployer) Run() error {
 	//call deploy api
 	result, err := util.ApiClient.CallApi(t.Api.Name, t.Api.Version, nil)
 	if err != nil {
-		util.Logger.Debug("Failed to call deploy api.")
-		return err
+		errMsg := "failed to call deploy api: " + err.Error()
+		util.Logger.Error(errMsg)
+		return errors.New(errMsg)
 	}
 	if result.Success == false {
 		errMsg := "deploy api return error: " + result.ErrorCode + ": " + result.ErrorMessage
@@ -87,8 +88,9 @@ func (t *Deployer) processDynamicApi(dynamicApi returndata.DynamicApi) error {
 	//call dynamic api
 	result, err := util.ApiClient.CallApi(dynamicApi.Name, dynamicApi.Version, nil)
 	if err != nil {
-		util.Logger.Error("Failed to call api: " + dynamicApi.Name + ": " + dynamicApi.Version)
-		return err
+		errMsg := "failed to call api: " + dynamicApi.Name + ": " + dynamicApi.Version + ": " + err.Error()
+		util.Logger.Error(errMsg)
+		return errors.New(errMsg)
 	}
 	if result.Success == false {
 		errMsg := "api return error: " + result.ErrorCode + ": " + result.ErrorMessage
@@ -96,7 +98,7 @@ func (t *Deployer) processDynamicApi(dynamicApi returndata.DynamicApi) error {
 		return errors.New(errMsg)
 	}
 	if result.Data == nil {
-		util.Logger.Info("Api returns empty data, nothing to do, go to next api")
+		util.Logger.Info("api returns empty data, nothing to do, go to next api")
 		return nil
 	}
 	result.ConvertDataTo(&itemList)
@@ -163,8 +165,9 @@ func (t *Deployer) reportResult(api returndata.DynamicApi, err error, tmpLogFile
 
 	result, err := util.ApiClient.CallApi(api.Name, api.Version, param)
 	if err != nil {
-		util.Logger.Error("Failed to call result report api: " + api.Name + ": " + api.Version)
-		return err
+		errMsg := "Failed to call result report api: " + api.Name + ": " + api.Version + ": " + err.Error()
+		util.Logger.Error(errMsg)
+		return errors.New(errMsg)
 	}
 	if result.Success == false {
 		errMsg := "Result report api return error: " + result.ErrorCode + ": " + result.ErrorMessage
