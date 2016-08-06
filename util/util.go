@@ -14,7 +14,7 @@ var ApiClient = sdk.NewClient()
 var ApiLogger = logrus.New()
 var Logger = &logrus.Logger{
 	Out:       os.Stderr,
-	Formatter: &logrus.TextFormatter{},
+	Formatter: &logrus.TextFormatter{DisableColors: true, FullTimestamp: true, TimestampFormat: "2006-01-02T15:04:05MST"},
 	Hooks:     make(logrus.LevelHooks),
 	Level:     logrus.InfoLevel,
 }
