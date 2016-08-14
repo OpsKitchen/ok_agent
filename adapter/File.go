@@ -32,10 +32,9 @@ type File struct {
 	FileContent string
 	NoTruncate  bool
 	Target      string
-	//internal fields, not for json
-	gid, uid  uint32
-	pathExist bool
-	perm      os.FileMode
+	gid, uid    uint32 //internal fields, not for json
+	pathExist   bool
+	perm        os.FileMode
 }
 
 //***** interface method area *****//

@@ -17,13 +17,12 @@ const (
 )
 
 type Augeas struct {
-	Action      string
-	FilePath    string
-	Lens        string
-	OptionPath  string
-	OptionValue string
-	//internal fields, not for json
-	fullOptionPath string
+	Action         string
+	FilePath       string
+	Lens           string
+	OptionPath     string
+	OptionValue    string
+	fullOptionPath string //internal fields, not for json
 	lensFile       string
 }
 
