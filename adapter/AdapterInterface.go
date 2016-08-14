@@ -5,4 +5,5 @@ type AdapterInterface interface {
 	Check() error
 	Parse() error
 	Process() error
+	String() string
 }

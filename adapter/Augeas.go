@@ -29,14 +29,7 @@ type Augeas struct {
 
 //***** interface method area *****//
 func (item *Augeas) Brief() string {
-	brief := "\n\t\tFile path: \t" + item.FilePath + "\n\t\tLens: \t\t" + item.Lens + "\n\t\tOption path: \t" + item.OptionPath
-	if item.OptionValue != "" {
-		brief += "\n\t\tOption value: \t" + item.OptionValue
-	}
-	if item.Action != "" {
-		brief += "\n\t\tAction: \t" + item.Action
-	}
-	return brief
+	return item.FilePath + "/" + item.OptionPath
 }
 
 func (item *Augeas) Check() error {
@@ -92,6 +85,19 @@ func (item *Augeas) Process() error {
 		return err
 	}
 	return nil
+}
+
+func (item *Augeas) String() string {
+	str := "\n\t\tFile path: \t" + item.FilePath +
+		"\n\t\tLens: \t\t" + item.Lens +
+		"\n\t\tOption path: \t" + item.OptionPath
+	if item.OptionValue != "" {
+		str += "\n\t\tOption value: \t" + item.OptionValue
+	}
+	if item.Action != "" {
+		str += "\n\t\tAction: \t" + item.Action
+	}
+	return str
 }
 
 //***** interface method area *****//

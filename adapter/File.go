@@ -40,17 +40,7 @@ type File struct {
 
 //***** interface method area *****//
 func (item *File) Brief() string {
-	brief := "\n\t\tFile path: \t" + item.FilePath + "\n\t\tFile type: \t" + item.FileType
-	if item.User != "" {
-		brief += "\n\t\tUser: \t\t" + item.User
-	}
-	if item.Group != "" {
-		brief += "\n\t\tGroup: \t\t" + item.Group
-	}
-	if item.Permission != "" {
-		brief += "\n\t\tPermission: \t" + item.Permission
-	}
-	return brief
+	return item.FilePath
 }
 
 func (item *File) Check() error {
@@ -149,6 +139,21 @@ func (item *File) Process() error {
 		return item.processLink()
 	}
 	return nil
+}
+
+func (item *File) String() string {
+	str := "\n\t\tFile path: \t" + item.FilePath +
+		"\n\t\tFile type: \t" + item.FileType
+	if item.User != "" {
+		str += "\n\t\tUser: \t\t" + item.User
+	}
+	if item.Group != "" {
+		str += "\n\t\tGroup: \t\t" + item.Group
+	}
+	if item.Permission != "" {
+		str += "\n\t\tPermission: \t" + item.Permission
+	}
+	return str
 }
 
 //***** interface method area *****//

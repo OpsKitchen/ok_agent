@@ -28,23 +28,7 @@ type Command struct {
 
 //***** interface method area *****//
 func (item *Command) Brief() string {
-	brief := "\n\t\tCommand: \t" + item.Command
-	if item.Cwd != "" {
-		brief += "\n\t\tCwd: \t\t" + item.Cwd
-	}
-	if item.User != "" {
-		brief += "\n\t\tUser: \t\t" + item.User
-	}
-	if item.Path != "" {
-		brief += "\n\t\tPath: \t\t" + item.Path
-	}
-	if item.RunIf != "" {
-		brief += "\n\t\tRun if: \t" + item.RunIf
-	}
-	if item.NotRunIf != "" {
-		brief += "\n\t\tNot run if: \t" + item.NotRunIf
-	}
-	return brief
+	return item.Command
 }
 
 func (item *Command) Check() error {
@@ -99,6 +83,26 @@ func (item *Command) Process() error {
 
 	//run command
 	return item.runWithMessage()
+}
+
+func (item *Command) String() string {
+	str := "\n\t\tCommand: \t" + item.Command
+	if item.Cwd != "" {
+		str += "\n\t\tCwd: \t\t" + item.Cwd
+	}
+	if item.User != "" {
+		str += "\n\t\tUser: \t\t" + item.User
+	}
+	if item.Path != "" {
+		str += "\n\t\tPath: \t\t" + item.Path
+	}
+	if item.RunIf != "" {
+		str += "\n\t\tRun if: \t" + item.RunIf
+	}
+	if item.NotRunIf != "" {
+		str += "\n\t\tNot run if: \t" + item.NotRunIf
+	}
+	return str
 }
 
 //***** interface method area *****//
