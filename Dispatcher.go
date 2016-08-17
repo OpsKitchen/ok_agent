@@ -8,10 +8,24 @@ import (
 	"github.com/OpsKitchen/ok_agent/util"
 	"github.com/gorilla/websocket"
 	"io/ioutil"
+	"time"
+)
+
+const (
+	// Time allowed to write a message to the peer.
+	writeWait = 10 * time.Second
+
+	// Time allowed to read the next pong message from the peer.
+	pongWait = 60 * time.Second
+
+	// Send pings to peer with this period. Must be less than pongWait.
+	pingPeriod = (pongWait * 9) / 10
 )
 
 type Dispatcher struct {
 	EntranceApiResult returndata.EntranceApi
+	wsConn            *websocket.Conn
+	messages          chan string
 }
 
 func (d *Dispatcher) Dispatch() {
@@ -32,7 +46,7 @@ func (d *Dispatcher) Dispatch() {
 	}
 	result.ConvertDataTo(&d.EntranceApiResult)
 	util.Logger.Info("Succeed to call entrance api.")
-	d.reportSysInfo()
+	go d.reportSysInfo()
 	d.listenWebSocket()
 }
 
@@ -51,19 +65,41 @@ func (d *Dispatcher) listenWebSocket() {
 
 	util.Logger.Info("Web socket server connected, waiting for task...")
 	defer conn.Close()
+
+	d.wsConn = conn
+	d.messages = make(chan string, 1)
+	go d.ReadWsMessage()
+
+	ticker := time.NewTicker(pingPeriod)
+	defer func() {
+		ticker.Stop()
+		conn.Close()
+	}()
 	for {
-		_, message, err := conn.ReadMessage()
-		if err != nil {
-			if websocket.IsUnexpectedCloseError(err, websocket.CloseNormalClosure) {
-				util.Logger.Debug("Connection closed abnormally: " + err.Error())
-			} else {
-				//server sent 1000 error code (websocket.CloseNormalClosure)
-				util.Logger.Debug("Server sends me close message: " + err.Error())
+		select {
+		case message := <-d.messages:
+			d.execTask(message)
+		case <-ticker.C:
+			if err := conn.WriteControl(websocket.PingMessage, []byte{}, time.Now().Add(writeWait)); err != nil {
+				util.Logger.Debug("Ping failed of ws connection: " + err.Error())
+				return
 			}
+		}
+	}
+}
+
+func (d *Dispatcher) ReadWsMessage() {
+	defer func() {
+		d.wsConn.Close()
+	}()
+	for {
+		mt, message, err := d.wsConn.ReadMessage()
+		if err != nil {
+			util.Logger.Debug("Can not read message: "+err.Error()+"\t message type: ", mt)
 			return
 		}
 
-		d.execTask(string(message))
+		d.messages <- string(message)
 	}
 }
 
