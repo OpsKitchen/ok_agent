@@ -151,10 +151,10 @@ func (item *Command) runWithMessage() error {
 	}
 
 	if err := cmd.Wait(); err != nil {
-		util.Logger.Error("Failed to run commnad.")
+		util.Logger.Error("Failed to run command.")
 		return err
 	} else {
-		util.Logger.Info("Succeed to run commnad.")
+		util.Logger.Info("Succeed to run command.")
 		return nil
 	}
 }

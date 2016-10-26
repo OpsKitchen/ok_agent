@@ -60,8 +60,8 @@ Demo output is like this:
     INFO[0000] Processing file: /tmp/agent_test/link_test
     INFO[0000] Processing command: gofmt -w /opt/ok/ok_agent
     INFO[0000] Running command...
-    INFO[0000] Succeed to run commnad.
+    INFO[0000] Succeed to run command.
     INFO[0000] Processing command: touch mysql.txt
     INFO[0000] Running command...
-    INFO[0000] Succeed to run commnad.
+    INFO[0000] Succeed to run command.
     INFO[0000] Congratulations! All tasks have been done successfully!

@@ -1,6 +1,7 @@
 package task
 
 import (
+	"bytes"
 	"encoding/json"
 	"errors"
 	"github.com/OpsKitchen/ok_agent/model/api"
@@ -10,6 +11,7 @@ import (
 	"io/ioutil"
 	"net"
 	"os"
+	"os/exec"
 	"path"
 	"reflect"
 	"strings"
@@ -97,7 +99,18 @@ func (t *SysInfoReporter) getIp() []string {
 }
 
 func (t *SysInfoReporter) getMachineType() string {
-	return machineTypePhysical
+	in := bytes.NewBuffer(nil)
+	dockerCmd := exec.Command("/bin/bash", "-c", "cat /proc/1/cgroup | grep -i docker")
+	dockerCmd.Stdin = in
+	if err := dockerCmd.Run(); err != nil {
+		virtualCmd := exec.Command("/bin/bash", "-c", "dmesg | grep -i virtual")
+		virtualCmd.Stdin = in
+		if err := virtualCmd.Run(); err != nil {
+			return machineTypePhysical
+		}
+		return machineTypeVirtual
+	}
+	return machineTypeContainer
 }
 
 func (t *SysInfoReporter) getMemory() int {
