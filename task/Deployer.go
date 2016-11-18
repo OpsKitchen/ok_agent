@@ -155,7 +155,7 @@ func (t *Deployer) processDynamicApi(dynamicApi returndata.DynamicApi) error {
 	return nil
 }
 
-func (t *Deployer) reportResult(api returndata.DynamicApi, err error, tmpLogFileHandle *os.File) error {
+func (t *Deployer) reportResult(dynamicApi returndata.DynamicApi, err error, tmpLogFileHandle *os.File) error {
 	param := &api.DeployResultParam{ServerUniqueName:config.C.ServerUniqueName}
 	if err != nil {
 		param.ErrorMessage = err.Error()
@@ -168,9 +168,9 @@ func (t *Deployer) reportResult(api returndata.DynamicApi, err error, tmpLogFile
 		param.Data = string(logMsg)
 	}
 
-	result, err := util.ApiClient.CallApi(api.Name, api.Version, param)
+	result, err := util.ApiClient.CallApi(dynamicApi.Name, dynamicApi.Version, param)
 	if err != nil {
-		errMsg := "Failed to call result report api: " + api.Name + ": " + api.Version + ": " + err.Error()
+		errMsg := "Failed to call result report api: " + dynamicApi.Name + ": " + dynamicApi.Version + ": " + err.Error()
 		util.Logger.Error(errMsg)
 		return errors.New(errMsg)
 	}

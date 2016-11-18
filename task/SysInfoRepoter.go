@@ -32,7 +32,7 @@ func (t *SysInfoReporter) Run() error {
 	cachedParam := &api.SysInfoParam{}
 	util.ParseJsonFile(cacheFile, cachedParam)
 
-	params := &api.SysInfoParam{ServerUniqueName:config.C.ServerUniqueName}
+	params := &api.SysInfoParam{ServerUniqueName: config.C.ServerUniqueName}
 	params.Cpu = t.getCpu()
 	params.Hostname = t.getHostname()
 	params.Ip = t.getIp()

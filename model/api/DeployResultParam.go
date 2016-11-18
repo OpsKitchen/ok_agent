@@ -1,4 +1,5 @@
 package api
+
 type DeployResultParam struct {
 	ServerUniqueName string      `json:"serverUniqueName"`
 	Success          bool        `json:"success"`
