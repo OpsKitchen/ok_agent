@@ -32,13 +32,13 @@ func (t *SysInfoReporter) Run() error {
 	cachedParam := &api.SysInfoParam{}
 	util.ParseJsonFile(cacheFile, cachedParam)
 
-	params := &api.SysInfoParam{}
+	params := &api.SysInfoParam{ServerUniqueName:config.C.ServerUniqueName}
 	params.Cpu = t.getCpu()
 	params.Hostname = t.getHostname()
 	params.Ip = t.getIp()
 	params.MachineType = t.getMachineType()
 	params.Memory = t.getMemory()
-	bytes, _ := json.Marshal(params)
+	newParamBytes, _ := json.Marshal(params)
 	if reflect.DeepEqual(params, cachedParam) {
 		return nil
 	}
@@ -56,7 +56,7 @@ func (t *SysInfoReporter) Run() error {
 		return errors.New(errMsg)
 	}
 	util.Logger.Info("Succeed to call sys info report api.")
-	ioutil.WriteFile(cacheFile, bytes, 0600)
+	ioutil.WriteFile(cacheFile, newParamBytes, 0600)
 	return nil
 }
 

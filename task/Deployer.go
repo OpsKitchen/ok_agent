@@ -11,6 +11,8 @@ import (
 	"os"
 	"strconv"
 	"time"
+	"github.com/OpsKitchen/ok_agent/model/api"
+	"github.com/OpsKitchen/ok_agent/model/config"
 )
 
 type Deployer struct {
@@ -23,7 +25,8 @@ func (t *Deployer) Run() error {
 	var apiResultData returndata.DeployApi
 
 	//call deploy api
-	result, err := util.ApiClient.CallApi(t.Api.Name, t.Api.Version, nil)
+	param := &api.EntranceApiParam{ServerUniqueName: config.C.ServerUniqueName}
+	result, err := util.ApiClient.CallApi(t.Api.Name, t.Api.Version, param)
 	if err != nil {
 		errMsg := "failed to call deploy api: " + err.Error()
 		util.Logger.Error(errMsg)
@@ -86,7 +89,8 @@ func (t *Deployer) processDynamicApi(dynamicApi returndata.DynamicApi) error {
 	var itemList []map[string]interface{}
 
 	//call dynamic api
-	result, err := util.ApiClient.CallApi(dynamicApi.Name, dynamicApi.Version, nil)
+	param := &api.EntranceApiParam{ServerUniqueName: config.C.ServerUniqueName}
+	result, err := util.ApiClient.CallApi(dynamicApi.Name, dynamicApi.Version, param)
 	if err != nil {
 		errMsg := "failed to call api: " + dynamicApi.Name + ": " + dynamicApi.Version + ": " + err.Error()
 		util.Logger.Error(errMsg)
@@ -152,7 +156,7 @@ func (t *Deployer) processDynamicApi(dynamicApi returndata.DynamicApi) error {
 }
 
 func (t *Deployer) reportResult(api returndata.DynamicApi, err error, tmpLogFileHandle *os.File) error {
-	param := &model.ApiResult{}
+	param := &api.DeployResultParam{ServerUniqueName:config.C.ServerUniqueName}
 	if err != nil {
 		param.ErrorMessage = err.Error()
 	} else {
