@@ -109,6 +109,7 @@ func (item *Command) String() string {
 
 func (item *Command) fastRun(line string) bool {
 	cmd := exec.Command(DefaultShell, item.User, "-c", line)
+	item.setCwd(cmd)
 	item.setPath(cmd)
 	err := cmd.Run()
 	return err == nil
