@@ -2,18 +2,14 @@ package task
 
 import (
 	"bytes"
-	"encoding/json"
 	"errors"
 	"github.com/OpsKitchen/ok_agent/model/api"
 	"github.com/OpsKitchen/ok_agent/model/api/returndata"
 	"github.com/OpsKitchen/ok_agent/model/config"
 	"github.com/OpsKitchen/ok_agent/util"
-	"io/ioutil"
 	"net"
 	"os"
 	"os/exec"
-	"path"
-	"reflect"
 	"strings"
 )
 
@@ -28,20 +24,12 @@ type SysInfoReporter struct {
 }
 
 func (t *SysInfoReporter) Run() error {
-	cacheFile := path.Dir(config.B.CredentialFile) + "/" + "sys_info.json"
-	cachedParam := &api.SysInfoParam{}
-	util.ParseJsonFile(cacheFile, cachedParam)
-
 	params := &api.SysInfoParam{ServerUniqueName: config.C.ServerUniqueName}
 	params.Cpu = t.getCpu()
 	params.Hostname = t.getHostname()
 	params.Ip = t.getIp()
 	params.MachineType = t.getMachineType()
 	params.Memory = t.getMemory()
-	newParamBytes, _ := json.Marshal(params)
-	if reflect.DeepEqual(params, cachedParam) {
-		return nil
-	}
 
 	util.Logger.Info("Calling sys info report api")
 	reportResult, err := util.ApiClient.CallApi(t.Api.Name, t.Api.Version, params)
@@ -56,7 +44,6 @@ func (t *SysInfoReporter) Run() error {
 		return errors.New(errMsg)
 	}
 	util.Logger.Info("Succeed to call sys info report api.")
-	ioutil.WriteFile(cacheFile, newParamBytes, 0600)
 	return nil
 }
 
