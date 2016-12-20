@@ -138,7 +138,7 @@ func (item *Command) runWithMessage() error {
 		if err != nil || io.EOF == err {
 			break
 		}
-		util.Logger.Info(line)
+		util.Logger.Debug(line)
 	}
 
 	//real-time output of std err
