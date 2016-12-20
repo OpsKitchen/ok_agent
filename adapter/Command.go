@@ -143,17 +143,20 @@ func (item *Command) runWithMessage() error {
 
 	//real-time output of std err
 	errReader := bufio.NewReader(errPipe)
+	var errorLineAll string
 	for {
 		line, err := errReader.ReadString(ReadStringDelimiter)
 		if err != nil || io.EOF == err {
 			break
 		}
+		errorLineAll += line
 		util.Logger.Error(line)
 	}
 
 	if err := cmd.Wait(); err != nil {
 		util.Logger.Error("Failed to run command.")
-		return err
+		return errors.New(errorLineAll)
+		//return err
 	} else {
 		util.Logger.Info("Succeed to run command.")
 		return nil
