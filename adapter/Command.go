@@ -143,7 +143,7 @@ func (item *Command) runWithMessage() error {
 
 	//real-time output of std err
 	errReader := bufio.NewReader(errPipe)
-	var errorLineAll string
+	errorLineAll := ""
 	for {
 		line, err := errReader.ReadString(ReadStringDelimiter)
 		if err != nil || io.EOF == err {
@@ -155,8 +155,10 @@ func (item *Command) runWithMessage() error {
 
 	if err := cmd.Wait(); err != nil {
 		util.Logger.Error("Failed to run command.")
-		return errors.New(errorLineAll)
-		//return err
+		if errorLineAll != "" {
+			return errors.New(errorLineAll)
+		}
+		return err
 	} else {
 		util.Logger.Info("Succeed to run command.")
 		return nil
