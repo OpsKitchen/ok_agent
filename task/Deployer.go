@@ -28,7 +28,7 @@ func (t *Deployer) Run() error {
 	param := &api.EntranceApiParam{ServerUniqueName: config.C.ServerUniqueName}
 	result, err := util.ApiClient.CallApi(t.Api.Name, t.Api.Version, param)
 	if err != nil {
-		errMsg := "failed to call deploy api: " + err.Error()
+		errMsg := "Failed to call deploy api: " + err.Error()
 		util.Logger.Error(errMsg)
 		return errors.New(errMsg)
 	}
@@ -92,7 +92,7 @@ func (t *Deployer) processDynamicApi(dynamicApi returndata.DynamicApi) error {
 	param := &api.EntranceApiParam{ServerUniqueName: config.C.ServerUniqueName}
 	result, err := util.ApiClient.CallApi(dynamicApi.Name, dynamicApi.Version, param)
 	if err != nil {
-		errMsg := "failed to call api: " + dynamicApi.Name + ": " + dynamicApi.Version + ": " + err.Error()
+		errMsg := "Failed to call api: " + dynamicApi.Name + ": " + dynamicApi.Version + ": " + err.Error()
 		util.Logger.Error(errMsg)
 		return errors.New(errMsg)
 	}
