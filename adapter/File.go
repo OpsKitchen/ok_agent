@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 	"strconv"
 	"syscall"
+	"strings"
 )
 
 const (
@@ -66,6 +67,11 @@ func (item *File) Check() error {
 		util.Logger.Error(errMsg)
 		return errors.New(errMsg)
 	}
+	if !strings.HasPrefix(item.FilePath, "/") {
+		errMsg := "adapter: file path is relative"
+		util.Logger.Error(errMsg)
+		return errors.New(errMsg)
+	}
 
 	//check symbol link target
 	if item.FileType == FileTypeLink && item.Target == "" {
@@ -77,6 +83,10 @@ func (item *File) Check() error {
 }
 
 func (item *File) Parse() error {
+	//remove trailing slash
+	if item.FileType == FileTypeDir && strings.HasSuffix(item.FilePath, "/") {
+		item.FilePath = item.FilePath[0:len(item.FilePath)-1]
+	}
 	//convert string permission to os.FileMode
 	if item.Permission == "" {
 		switch item.FileType {
@@ -160,7 +170,6 @@ func (item *File) String() string {
 func (item *File) processDir() error {
 	//create dir
 	if item.pathExist == false {
-
 		if err := os.Mkdir(item.FilePath, item.perm); err != nil {
 			util.Logger.Error("Failed to create directory: " + err.Error())
 			return err
