@@ -3,7 +3,9 @@ package task
 import (
 	"errors"
 	"github.com/OpsKitchen/ok_agent/adapter"
+	"github.com/OpsKitchen/ok_agent/model/api"
 	"github.com/OpsKitchen/ok_agent/model/api/returndata"
+	"github.com/OpsKitchen/ok_agent/model/config"
 	"github.com/OpsKitchen/ok_agent/util"
 	"github.com/OpsKitchen/ok_api_sdk_go/sdk/model"
 	"io"
@@ -11,8 +13,6 @@ import (
 	"os"
 	"strconv"
 	"time"
-	"github.com/OpsKitchen/ok_agent/model/api"
-	"github.com/OpsKitchen/ok_agent/model/config"
 )
 
 type Deployer struct {
@@ -156,7 +156,7 @@ func (t *Deployer) processDynamicApi(dynamicApi returndata.DynamicApi) error {
 }
 
 func (t *Deployer) reportResult(dynamicApi returndata.DynamicApi, err error, tmpLogFileHandle *os.File) error {
-	param := &api.DeployResultParam{ServerUniqueName:config.C.ServerUniqueName}
+	param := &api.DeployResultParam{ServerUniqueName: config.C.ServerUniqueName}
 	if err != nil {
 		param.ErrorMessage = err.Error()
 	} else {
