@@ -8,8 +8,8 @@ import (
 	"os/user"
 	"path/filepath"
 	"strconv"
-	"syscall"
 	"strings"
+	"syscall"
 )
 
 const (
@@ -85,7 +85,7 @@ func (item *File) Check() error {
 func (item *File) Parse() error {
 	//remove trailing slash
 	if item.FileType == FileTypeDir && strings.HasSuffix(item.FilePath, "/") {
-		item.FilePath = item.FilePath[0:len(item.FilePath)-1]
+		item.FilePath = item.FilePath[0 : len(item.FilePath)-1]
 	}
 	//convert string permission to os.FileMode
 	if item.Permission == "" {
