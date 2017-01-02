@@ -53,7 +53,9 @@ func ParseJsonFile(file string, out interface{}) error {
 func PrepareApiClient() {
 	sdk.SetDefaultLogger(ApiLogger)
 	ApiClient.RequestBuilder.Config.SetDisableSSL(config.B.DisableSSL).SetGatewayHost(config.B.GatewayHost).
+		SetGatewayPort(config.B.GatewayPort).SetGatewayPath(config.B.GatewayPath).
 		SetAppMarketIdValue(config.B.AppMarketId).SetAppVersionValue(config.B.AgentVersion)
+
 	ApiClient.RequestBuilder.Credential.SetAppKey(config.C.AppKey).SetSecret(config.C.Secret)
 }
 

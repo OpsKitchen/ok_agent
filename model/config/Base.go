@@ -8,5 +8,7 @@ type Base struct {
 	EntranceApiName    string
 	EntranceApiVersion string
 	GatewayHost        string
+	GatewayPath        string
+	GatewayPort        int
 	LogDir             string
 }
