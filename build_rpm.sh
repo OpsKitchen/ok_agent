@@ -15,7 +15,7 @@ src_dir="/root/rpmbuild/SOURCES"
 version=`grep AgentVersion ./model/config/config.go | awk -F '"' '{print $2}'`
 prod_name_with_version=${prod_name}-${version}
 src_tar_gz=${prod_name_with_version}.tar.gz
-spec_file=${src_dir}/${prod_name}-${version}.spec
+spec_file=${src_dir}/${prod_name_with_version}.spec
 
 #compile go code
 go build
@@ -32,7 +32,7 @@ tar zcf ${src_tar_gz} ${prod_name_with_version}/
 cd ${cwd}
 
 echo "
-Summary:    OpsKitchen.com linux agent rpm package
+Summary:    Linux agent rpm package of ops.best
 Name:       ${prod_name}
 Version:    ${version}
 Release:    1
@@ -40,11 +40,9 @@ Source:     ${src_tar_gz}
 License:    GPL
 Packager:   qinjx
 Group:      Application
-URL:        http://www.OpsKitchen.com
+URL:        https://ops.best
 
 %description
-This is the linux agent for OpsKitchen.com
-
 %prep
 %setup -q
 
@@ -71,3 +69,7 @@ install -m 600 credential.json \$RPM_BUILD_ROOT/root/.ok_agent/credential.json
 
 #build rpm
 rpmbuild -bb ${spec_file}
+
+#copy as latest pkg
+cd /root/rpmbuild/RPMS/x86_64/
+cp -f ${prod_name_with_version}-1.x86_64.rpm ${prod_name}-latest.x86_64.rpm
