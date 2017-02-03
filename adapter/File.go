@@ -25,6 +25,7 @@ const (
 )
 
 type File struct {
+	Brief       string
 	FilePath    string
 	User        string
 	Group       string
@@ -39,8 +40,8 @@ type File struct {
 }
 
 //***** interface method area *****//
-func (item *File) Brief() string {
-	return item.FilePath
+func (item *File) GetBrief() string {
+	return item.Brief
 }
 
 func (item *File) Check() error {

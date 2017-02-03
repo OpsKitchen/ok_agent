@@ -18,6 +18,7 @@ const (
 
 type Augeas struct {
 	Action         string
+	Brief          string
 	FilePath       string
 	Lens           string
 	OptionPath     string
@@ -27,8 +28,8 @@ type Augeas struct {
 }
 
 //***** interface method area *****//
-func (item *Augeas) Brief() string {
-	return item.FilePath + "/" + item.OptionPath
+func (item *Augeas) GetBrief() string {
+	return item.Brief
 }
 
 func (item *Augeas) Check() error {

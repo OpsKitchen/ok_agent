@@ -18,6 +18,7 @@ const (
 )
 
 type Command struct {
+	Brief    string
 	Command  string
 	Cwd      string
 	Path     string
@@ -27,8 +28,8 @@ type Command struct {
 }
 
 //***** interface method area *****//
-func (item *Command) Brief() string {
-	return item.Command
+func (item *Command) GetBrief() string {
+	return item.Brief
 }
 
 func (item *Command) Check() error {
