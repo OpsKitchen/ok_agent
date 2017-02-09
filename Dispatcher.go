@@ -47,6 +47,7 @@ func (d *Dispatcher) Dispatch() {
 	result.ConvertDataTo(&d.EntranceApiResult)
 	util.Logger.Info("Succeed to call entrance api.")
 	go d.reportSysInfo()
+	d.updateAgent()
 	d.listenWebSocket()
 }
 
@@ -116,8 +117,7 @@ func (d *Dispatcher) execTask(msg string) {
 
 	case task.FlagUpdateAgent:
 		util.Logger.Info("Received update agent task.")
-		updater := &task.Updater{Api: d.EntranceApiResult.UpdateAgentApi}
-		updater.Run()
+		d.updateAgent()
 
 	default:
 		errMsg := "Unsupported task: " + msg
@@ -128,4 +128,9 @@ func (d *Dispatcher) execTask(msg string) {
 func (d *Dispatcher) reportSysInfo() {
 	reporter := &task.SysInfoReporter{Api: d.EntranceApiResult.ReportSysInfoApi}
 	reporter.Run()
+}
+
+func (d *Dispatcher) updateAgent() {
+	updater := &task.Updater{Api: d.EntranceApiResult.UpdateAgentApi}
+	updater.Run()
 }
