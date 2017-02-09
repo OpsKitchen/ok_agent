@@ -45,6 +45,13 @@ func (item *File) GetBrief() string {
 }
 
 func (item *File) Check() error {
+	//check brief
+	if item.Brief == "" {
+		errMsg := "adapter: file brief is empty"
+		util.Logger.Error(errMsg)
+		return errors.New(errMsg)
+	}
+
 	//check file type
 	if item.FileType == "" {
 		errMsg := "adapter: file type is empty"

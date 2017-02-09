@@ -33,6 +33,13 @@ func (item *Command) GetBrief() string {
 }
 
 func (item *Command) Check() error {
+	//check brief
+	if item.Brief == "" {
+		errMsg := "adapter: command brief is empty"
+		util.Logger.Error(errMsg)
+		return errors.New(errMsg)
+	}
+
 	//check command
 	if item.Command == "" {
 		errMsg := "adapter: command is empty"

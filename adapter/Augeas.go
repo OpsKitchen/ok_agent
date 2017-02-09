@@ -33,6 +33,13 @@ func (item *Augeas) GetBrief() string {
 }
 
 func (item *Augeas) Check() error {
+	//check brief
+	if item.Brief == "" {
+		errMsg := "adapter: augeas brief is empty"
+		util.Logger.Error(errMsg)
+		return errors.New(errMsg)
+	}
+
 	//check action
 	if item.Action != "" && item.Action != ActionRemove && item.Action != ActionSet {
 		errMsg := "adapter: augeas action is invalid"
@@ -141,7 +148,7 @@ func (item *Augeas) saveAugeas() error {
 			util.Logger.Error("Failed to set option path and value: " + err.Error())
 			return err
 		}
-		util.Logger.Info("Succeed to set " + item.OptionPath + "@" + item.FilePath + " to '" + item.OptionValue + "'")
+		util.Logger.Info("Succeed to set " + item.Brief)
 	} else if item.Action == ActionRemove { //action = "rm"
 		_, err = ag.Get(item.fullOptionPath)
 		if err != nil {
@@ -153,7 +160,7 @@ func (item *Augeas) saveAugeas() error {
 			util.Logger.Error("Failed to remove option: " + err.Error())
 			return err
 		}
-		util.Logger.Info("Succeed to remove " + item.OptionPath)
+		util.Logger.Info("Succeed to remove " + item.Brief)
 	}
 
 	//save config file change to disk
