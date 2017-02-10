@@ -65,7 +65,7 @@ func (d *Dispatcher) listenWebSocket() {
 	}
 	defer conn.Close()
 	util.Logger.Info("Web socket server connected, waiting for task...")
-	
+
 	d.wsConn = conn
 	d.wsBroken = make(chan bool, 1)
 	go d.ReadWsMessage()
@@ -73,7 +73,7 @@ func (d *Dispatcher) listenWebSocket() {
 
 	for {
 		select {
-		case <- d.wsBroken:
+		case <-d.wsBroken:
 			return
 		}
 	}
@@ -89,7 +89,7 @@ func (d *Dispatcher) ReadWsMessage() {
 			util.Logger.Error("Can not read message: "+err.Error()+"\t message type: ", mt)
 			return
 		}
-		d.execTask(message)
+		d.execTask(string(message))
 	}
 }
 
