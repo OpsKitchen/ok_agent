@@ -25,7 +25,7 @@ const (
 type Dispatcher struct {
 	EntranceApiResult returndata.EntranceApi
 	wsConn            *websocket.Conn
-	messages          chan string
+	wsBroken          chan bool
 }
 
 func (d *Dispatcher) Dispatch() {
@@ -47,7 +47,7 @@ func (d *Dispatcher) Dispatch() {
 	result.ConvertDataTo(&d.EntranceApiResult)
 	util.Logger.Info("Succeed to call entrance api.")
 	go d.reportSysInfo()
-	d.updateAgent()
+	go d.updateAgent()
 	d.listenWebSocket()
 }
 
@@ -63,44 +63,50 @@ func (d *Dispatcher) listenWebSocket() {
 		}
 		return
 	}
-
-	util.Logger.Info("Web socket server connected, waiting for task...")
 	defer conn.Close()
-
+	util.Logger.Info("Web socket server connected, waiting for task...")
+	
 	d.wsConn = conn
-	d.messages = make(chan string, 1)
+	d.wsBroken = make(chan bool, 1)
 	go d.ReadWsMessage()
+	go d.PingWsServer()
 
-	ticker := time.NewTicker(pingPeriod)
-	defer func() {
-		ticker.Stop()
-		conn.Close()
-	}()
 	for {
 		select {
-		case message := <-d.messages:
-			d.execTask(message)
-		case <-ticker.C:
-			if err := conn.WriteControl(websocket.PingMessage, []byte{}, time.Now().Add(writeWait)); err != nil {
-				util.Logger.Debug("Ping failed of ws connection: " + err.Error())
-				return
-			}
+		case <- d.wsBroken:
+			return
 		}
 	}
 }
 
 func (d *Dispatcher) ReadWsMessage() {
 	defer func() {
-		d.wsConn.Close()
+		d.wsBroken <- true
 	}()
 	for {
 		mt, message, err := d.wsConn.ReadMessage()
 		if err != nil {
-			util.Logger.Debug("Can not read message: "+err.Error()+"\t message type: ", mt)
+			util.Logger.Error("Can not read message: "+err.Error()+"\t message type: ", mt)
 			return
 		}
+		d.execTask(message)
+	}
+}
 
-		d.messages <- string(message)
+func (d *Dispatcher) PingWsServer() {
+	ticker := time.NewTicker(pingPeriod)
+	defer func() {
+		ticker.Stop()
+		d.wsBroken <- true
+	}()
+	for {
+		select {
+		case <-ticker.C:
+			if err := d.wsConn.WriteControl(websocket.PingMessage, []byte{}, time.Now().Add(writeWait)); err != nil {
+				util.Logger.Error("Ping failed of ws connection: " + err.Error())
+				return
+			}
+		}
 	}
 }
 
