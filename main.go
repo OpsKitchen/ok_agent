@@ -49,7 +49,7 @@ func main() {
 	util.PrepareApiClient()
 
 	//dispatch
-	for d := new(Dispatcher); ; time.Sleep(2 * time.Second) {
+	for d := new(Dispatcher); ; time.Sleep(10 * time.Second) {
 		d.Dispatch()
 	}
 }
