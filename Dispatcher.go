@@ -68,15 +68,8 @@ func (d *Dispatcher) listenWebSocket() {
 
 	d.wsConn = conn
 	d.wsBroken = make(chan bool, 1)
-	go d.ReadWsMessage()
 	go d.PingWsServer()
-
-	for {
-		select {
-		case <-d.wsBroken:
-			return
-		}
-	}
+	d.ReadWsMessage()
 }
 
 func (d *Dispatcher) ReadWsMessage() {
@@ -84,18 +77,12 @@ func (d *Dispatcher) ReadWsMessage() {
 		d.wsBroken <- true
 	}()
 	for {
-		select {
-		case <-d.wsBroken:
+		mt, message, err := d.wsConn.ReadMessage()
+		if err != nil {
+			util.Logger.Error("Can not read message: "+err.Error()+"\t message type: ", mt)
 			return
-		default:
-			mt, message, err := d.wsConn.ReadMessage()
-			if err != nil {
-				util.Logger.Error("Can not read message: "+err.Error()+"\t message type: ", mt)
-				return
-			}
-			d.execTask(string(message))
 		}
-
+		d.execTask(string(message))
 	}
 }
 
