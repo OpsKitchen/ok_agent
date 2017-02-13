@@ -84,12 +84,18 @@ func (d *Dispatcher) ReadWsMessage() {
 		d.wsBroken <- true
 	}()
 	for {
-		mt, message, err := d.wsConn.ReadMessage()
-		if err != nil {
-			util.Logger.Error("Can not read message: "+err.Error()+"\t message type: ", mt)
+		select {
+		case <-d.wsBroken:
 			return
+		default:
+			mt, message, err := d.wsConn.ReadMessage()
+			if err != nil {
+				util.Logger.Error("Can not read message: "+err.Error()+"\t message type: ", mt)
+				return
+			}
+			d.execTask(string(message))
 		}
-		d.execTask(string(message))
+
 	}
 }
 
@@ -101,6 +107,8 @@ func (d *Dispatcher) PingWsServer() {
 	}()
 	for {
 		select {
+		case <-d.wsBroken:
+			return
 		case <-ticker.C:
 			if err := d.wsConn.WriteControl(websocket.PingMessage, []byte{}, time.Now().Add(writeWait)); err != nil {
 				util.Logger.Error("Ping failed of ws connection: " + err.Error())
