@@ -158,7 +158,7 @@ func (item *Command) runWithMessage() error {
 			break
 		}
 		errorLineAll += line
-		util.Logger.Error(line)
+		util.Logger.Debug(line)
 	}
 
 	if err := cmd.Wait(); err != nil {
