@@ -8,13 +8,14 @@ import (
 	"github.com/Sirupsen/logrus"
 	"io/ioutil"
 	"os"
+	"time"
 )
 
 var ApiClient = sdk.NewClient()
 var ApiLogger = logrus.New()
 var Logger = &logrus.Logger{
 	Out:       os.Stderr,
-	Formatter: &logrus.JSONFormatter{},
+	Formatter: &logrus.JSONFormatter{TimestampFormat: time.RFC3339Nano},
 	Hooks:     make(logrus.LevelHooks),
 	Level:     logrus.InfoLevel,
 }

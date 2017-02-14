@@ -82,11 +82,11 @@ func (item *Command) Parse() error {
 func (item *Command) Process() error {
 	//check if necessary to run command
 	if item.RunIf != "" && item.fastRun(item.RunIf) == false {
-		util.Logger.Info("Skip running, because 'RunIf' retunrs false")
+		util.Logger.Info("Skip running: " + item.Brief + ", because 'RunIf' retunrs false")
 		return nil
 	}
 	if item.NotRunIf != "" && item.fastRun(item.NotRunIf) == true {
-		util.Logger.Info("Skip running, because 'NotRunIf' returns true")
+		util.Logger.Info("Skip running: " + item.Brief + ", because 'NotRunIf' returns true")
 		return nil
 	}
 
