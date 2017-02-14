@@ -20,7 +20,7 @@ type Deployer struct {
 }
 
 func (t *Deployer) Run() error {
-	util.Logger.Info("Calling deploy api")
+	util.Logger.Info("Calling deploy api...")
 	var result *model.ApiResult
 	var apiResultData returndata.DeployApi
 
@@ -68,8 +68,8 @@ func (t *Deployer) Run() error {
 		os.Remove(tmpLogFileName)
 	}()
 	util.Logger.Info("Succeed to call deploy api.")
-	util.Logger.Info("Product version: " + apiResultData.ProductVersion)
-	util.Logger.Info("Server name: " + apiResultData.ServerName)
+	util.Logger.Debug("Product version: " + apiResultData.ProductVersion)
+	util.Logger.Debug("Server name: " + apiResultData.ServerName)
 
 	//call dynamic api
 	for _, dynamicApi := range apiResultData.ApiList {
@@ -85,7 +85,6 @@ func (t *Deployer) Run() error {
 }
 
 func (t *Deployer) processDynamicApi(dynamicApi returndata.DynamicApi) error {
-	util.Logger.Info("Calling dynamic api: ", dynamicApi.Name)
 	var itemList []map[string]interface{}
 
 	//call dynamic api
@@ -97,15 +96,16 @@ func (t *Deployer) processDynamicApi(dynamicApi returndata.DynamicApi) error {
 		return errors.New(errMsg)
 	}
 	if result.Success == false {
-		errMsg := "api return error: " + result.ErrorCode + ": " + result.ErrorMessage
+		errMsg := "Dynamic api return error: " + result.ErrorCode + ": " + result.ErrorMessage
 		util.Logger.Error(errMsg)
 		return errors.New(errMsg)
 	}
 	if result.Data == nil {
-		util.Logger.Info("api returns empty data, nothing to do, go to next api")
+		util.Logger.Debug("Dynamic api returns no data field, nothing to do, go to next api")
 		return nil
 	}
 	result.ConvertDataTo(&itemList)
+	util.Logger.Info("Succeed to call dynamic api: ", dynamicApi.Name)
 
 	//cast item list to native go type
 	for _, mapItem := range itemList {
@@ -133,14 +133,15 @@ func (t *Deployer) processDynamicApi(dynamicApi returndata.DynamicApi) error {
 			util.Logger.Error(errMsg)
 			return errors.New(errMsg)
 		}
-		util.Logger.Info("Processing: " + item.GetBrief())
+
+		//process item
 		if err := item.Check(); err != nil {
-			errMsg := "Failed to check item: " + err.Error()
+			errMsg := "Failed to check item: " + item.GetBrief() + ": " + err.Error()
 			util.Logger.Error(errMsg)
 			return errors.New(errMsg)
 		}
 		if err := item.Parse(); err != nil {
-			errMsg := "Failed to parse item: " + err.Error()
+			errMsg := "Failed to parse item: " + item.GetBrief() + ": " + err.Error()
 			util.Logger.Error(errMsg)
 			return errors.New(errMsg)
 		}
@@ -150,8 +151,8 @@ func (t *Deployer) processDynamicApi(dynamicApi returndata.DynamicApi) error {
 			util.Logger.Debug(item)
 			return errors.New(errMsg)
 		}
+		util.Logger.Info("Succeed to process: " + item.GetBrief())
 	}
-	util.Logger.Info("Succeed to process dynamic api: " + dynamicApi.Name + ": " + dynamicApi.Version)
 	return nil
 }
 

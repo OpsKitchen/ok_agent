@@ -138,7 +138,7 @@ func (item *Augeas) saveAugeas() error {
 	if item.Action == ActionSet { //action = "set"
 		oldOptionValue, err := ag.Get(item.fullOptionPath)
 		if err == nil && oldOptionValue == item.OptionValue {
-			util.Logger.Debug("Config option value is correct, skip setting.")
+			util.Logger.Debug("Skip setting config option value, because it is correct.")
 			return nil
 		}
 
@@ -148,11 +148,11 @@ func (item *Augeas) saveAugeas() error {
 			util.Logger.Error("Failed to set option path and value: " + err.Error())
 			return err
 		}
-		util.Logger.Info("Succeed to set " + item.Brief)
+		util.Logger.Debug("Succeed to set " + item.fullOptionPath)
 	} else if item.Action == ActionRemove { //action = "rm"
 		_, err = ag.Get(item.fullOptionPath)
 		if err != nil {
-			util.Logger.Debug("Config option does not exists, skip removing.")
+			util.Logger.Debug("Skip removing config option, because it does not exists.")
 			return nil
 		}
 		num := ag.Remove(item.fullOptionPath)
@@ -160,7 +160,7 @@ func (item *Augeas) saveAugeas() error {
 			util.Logger.Error("Failed to remove option: " + err.Error())
 			return err
 		}
-		util.Logger.Info("Succeed to remove " + item.Brief)
+		util.Logger.Debug("Succeed to remove " + item.fullOptionPath)
 	}
 
 	//save config file change to disk
@@ -170,6 +170,6 @@ func (item *Augeas) saveAugeas() error {
 		util.Logger.Error("Failed to save change of config file: " + err.Error())
 		return err
 	}
-	util.Logger.Info("Succeed to save change of config file.")
+	util.Logger.Debug("Succeed to save change of config file.")
 	return nil
 }

@@ -31,7 +31,6 @@ func (t *SysInfoReporter) Run() error {
 	params.MachineType = t.getMachineType()
 	params.Memory = t.getMemory()
 
-	util.Logger.Info("Calling sys info report api")
 	reportResult, err := util.ApiClient.CallApi(t.Api.Name, t.Api.Version, params)
 	if err != nil {
 		errMsg := "Failed to call sys info report api: " + t.Api.Name + ": " + t.Api.Version + ": " + err.Error()
@@ -39,7 +38,7 @@ func (t *SysInfoReporter) Run() error {
 		return errors.New(errMsg)
 	}
 	if reportResult.Success == false {
-		errMsg := "api return error: " + reportResult.ErrorCode + ": " + reportResult.ErrorMessage
+		errMsg := "Sys info report api return error: " + reportResult.ErrorCode + ": " + reportResult.ErrorMessage
 		util.Logger.Error(errMsg)
 		return errors.New(errMsg)
 	}

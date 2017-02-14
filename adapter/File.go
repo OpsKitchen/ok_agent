@@ -85,6 +85,7 @@ func (item *File) Check() error {
 	if item.FileType == FileTypeLink && item.Target == "" {
 		errMsg := "adapter: symbol link target is empty"
 		util.Logger.Error(errMsg)
+		return errors.New(errMsg)
 	}
 
 	return nil
@@ -108,7 +109,7 @@ func (item *File) Parse() error {
 	} else {
 		filePerm, err := strconv.ParseUint(item.Permission, 8, 32)
 		if err != nil {
-			util.Logger.Error("File permission is invalid")
+			util.Logger.Error("File permission is invalid: " + item.Permission)
 			return err
 		}
 		item.perm = os.FileMode(filePerm)
@@ -118,14 +119,16 @@ func (item *File) Parse() error {
 	if item.User != "" && item.Group != "" {
 		groupObj, err := user.LookupGroup(item.Group)
 		if err != nil {
-			util.Logger.Error("Group does not exist")
-			return err
+			errMsg := "adapter: Group does not exist: " + item.Group + ": " + err.Error()
+			util.Logger.Error(errMsg)
+			return errors.New(errMsg)
 		}
 
 		userObj, err := user.Lookup(item.User)
 		if err != nil {
-			util.Logger.Error("User does not exist")
-			return err
+			errMsg := "adapter: user does not exist: " + item.Group + ": " + err.Error()
+			util.Logger.Error(errMsg)
+			return errors.New(errMsg)
 		}
 		gid, _ := strconv.ParseUint(groupObj.Gid, 10, 32)
 		uid, _ := strconv.ParseUint(userObj.Uid, 10, 32)
@@ -182,9 +185,9 @@ func (item *File) processDir() error {
 			util.Logger.Error("Failed to create directory: " + err.Error())
 			return err
 		}
-		util.Logger.Info("Succeed to create directory.")
+		util.Logger.Debug("Succeed to create directory.")
 	} else {
-		util.Logger.Debug("Directory already exists, skip creating.")
+		util.Logger.Debug("Skip creating directory, because it already exists.")
 	}
 
 	//change permission
@@ -208,10 +211,10 @@ func (item *File) processFile() error {
 			util.Logger.Error("Failed to create file: " + err.Error())
 			return err
 		}
-		util.Logger.Info("Succeed to create ")
+		util.Logger.Debug("Succeed to create file.")
 		skipWriteContent = item.FileContent == ""
 	} else {
-		util.Logger.Debug("File already exists, skip creating.")
+		util.Logger.Debug("Skip creating, because it already exists.")
 		if item.FileContent == "" { //content is empty, check if NoTruncate is true
 			skipWriteContent = item.NoTruncate
 		} //else, content not empty, ignore NoTruncate, skipWriteContent = false
@@ -241,7 +244,7 @@ func (item *File) processLink() error {
 	//remove link if necessary
 	if item.pathExist == true {
 		if linkTarget, _ := os.Readlink(item.FilePath); linkTarget == item.Target {
-			util.Logger.Debug("Symbol link with correct target already exists, skip creating.")
+			util.Logger.Debug("Skip creating symbol link, because it already exists with correct target .")
 			return nil
 		}
 
@@ -256,7 +259,7 @@ func (item *File) processLink() error {
 		util.Logger.Error("Failed to create link: " + err.Error())
 		return err
 	}
-	util.Logger.Info("Succeed to create symbol link.")
+	util.Logger.Debug("Succeed to create symbol link.")
 	return nil
 }
 
@@ -268,7 +271,7 @@ func (item *File) changeOwnership() error {
 			if convertedOk {
 				//user and group is already right, no need to change
 				if item.gid == stat_t.Gid && item.uid == stat_t.Uid {
-					util.Logger.Debug("File ownership is correct, skip changing ownership.")
+					util.Logger.Debug("Skip changing ownership, because file ownership is correct.")
 					return nil
 				}
 			}
@@ -278,7 +281,7 @@ func (item *File) changeOwnership() error {
 			util.Logger.Error("Failed to change ownership: " + err.Error())
 			return err
 		}
-		util.Logger.Info("Succeed to change ownership.")
+		util.Logger.Debug("Succeed to change ownership.")
 	}
 	return nil
 }
@@ -287,7 +290,7 @@ func (item *File) changePermission() error {
 	if item.Permission != "" {
 		stat, _ := os.Stat(item.FilePath)
 		if stat.Mode().Perm() == item.perm {
-			util.Logger.Debug("File permission is correct, skip changing permission.")
+			util.Logger.Debug("Skip changing permission, because file permission is correct.")
 			return nil
 		}
 
@@ -295,7 +298,7 @@ func (item *File) changePermission() error {
 			util.Logger.Error("Failed to change permission: " + err.Error())
 			return err
 		}
-		util.Logger.Info("Succeed to change file permission.")
+		util.Logger.Debug("Succeed to change file permission.")
 	}
 	return nil
 }
@@ -339,7 +342,7 @@ func (item *File) createParentDir() error {
 			util.Logger.Error(errMsg)
 			return errors.New(errMsg)
 		}
-		util.Logger.Debug("Parent directory already exists, skip creating.")
+		util.Logger.Debug("Skip creating parent directory, because it already exists.")
 		return nil
 	}
 
@@ -347,13 +350,13 @@ func (item *File) createParentDir() error {
 		util.Logger.Error("Failed to create parent directory: " + parentDir + "\n" + err.Error())
 		return err
 	}
-	util.Logger.Info("Succeed to create parent directory: ", parentDir)
+	util.Logger.Debug("Succeed to create parent directory: " + parentDir)
 	return nil
 }
 
 func (item *File) writeContent() error {
 	if contentBytes, _ := ioutil.ReadFile(item.FilePath); item.FileContent == string(contentBytes) {
-		util.Logger.Debug("File content is correct, skip writing content.")
+		util.Logger.Debug("Skip writing content, because it is correct.")
 		return nil
 	}
 
@@ -361,6 +364,6 @@ func (item *File) writeContent() error {
 		util.Logger.Error("Failed to write content: " + err.Error())
 		return err
 	}
-	util.Logger.Info("Succeed to write content.")
+	util.Logger.Debug("Succeed to write content.")
 	return nil
 }

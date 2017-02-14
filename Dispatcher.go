@@ -29,7 +29,7 @@ type Dispatcher struct {
 }
 
 func (d *Dispatcher) Dispatch() {
-	util.Logger.Info("Calling entrance api")
+	util.Logger.Debug("Calling entrance api")
 	param := &api.EntranceApiParam{ServerUniqueName: config.C.ServerUniqueName}
 	result, err := util.ApiClient.CallApi(config.B.EntranceApiName, config.B.EntranceApiVersion, param)
 	if err != nil {
@@ -108,16 +108,16 @@ func (d *Dispatcher) PingWsServer() {
 func (d *Dispatcher) execTask(msg string) {
 	switch msg {
 	case task.FlagDeploy:
-		util.Logger.Info("Received deploy task.")
+		util.Logger.Debug("Received deploy task.")
 		deployer := &task.Deployer{Api: d.EntranceApiResult.DeployApi}
 		deployer.Run()
 
 	case task.FlagReportSysInfo:
-		util.Logger.Info("Received report sys info task.")
+		util.Logger.Debug("Received report sys info task.")
 		d.reportSysInfo()
 
 	case task.FlagUpdateAgent:
-		util.Logger.Info("Received update agent task.")
+		util.Logger.Debug("Received update agent task.")
 		d.updateAgent()
 
 	default:
