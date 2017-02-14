@@ -1,8 +1,7 @@
 package returndata
 
 type DeployApi struct {
-	ProductVersion  string
-	ServerName      string
-	ApiList         []DynamicApi
-	ReportResultApi DynamicApi
+	ProductVersion string
+	ServerName     string
+	ApiList        []DynamicApi
 }

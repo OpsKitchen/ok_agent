@@ -16,40 +16,66 @@ import (
 )
 
 type Deployer struct {
-	Api *returndata.DynamicApi
+	DeployApi         *returndata.DynamicApi
+	ReportResultApi   *returndata.DynamicApi
+	mainLogFileHandle io.Writer
+	tmpLogFileHandle  *os.File
 }
 
 func (t *Deployer) Run() error {
-	util.Logger.Info("Calling deploy api...")
 	var result *model.ApiResult
-	var apiResultData returndata.DeployApi
+	var deployApiReturnData returndata.DeployApi
+
+	//change log file to tmp file
+	if err := t.changeLogFile(); err != nil {
+		return t.reportResult(err)
+	}
 
 	//call deploy api
 	param := &api.EntranceApiParam{ServerUniqueName: config.C.ServerUniqueName}
-	result, err := util.ApiClient.CallApi(t.Api.Name, t.Api.Version, param)
+	util.Logger.Info("Calling deploy api...")
+	result, err := util.ApiClient.CallApi(t.DeployApi.Name, t.DeployApi.Version, param)
+	util.Logger.Info("Succeed to call deploy api.")
+	util.Logger.Debug("Product version: " + deployApiReturnData.ProductVersion)
+	util.Logger.Debug("Server name: " + deployApiReturnData.ServerName)
+
+	//deploy api returns error
 	if err != nil {
 		errMsg := "Failed to call deploy api: " + err.Error()
 		util.Logger.Error(errMsg)
-		return errors.New(errMsg)
+		return t.reportResult(errors.New(errMsg))
 	}
 	if result.Success == false {
-		errMsg := "deploy api return error: " + result.ErrorCode + ": " + result.ErrorMessage
+		errMsg := "Deploy api return error: " + result.ErrorCode + ": " + result.ErrorMessage
 		util.Logger.Error(errMsg)
-		return errors.New(errMsg)
-	}
-	if result.Data == nil {
-		errMsg := "deploy api return empty data."
-		util.Logger.Error(errMsg)
-		return errors.New(errMsg)
-	}
-	result.ConvertDataTo(&apiResultData)
-	if len(apiResultData.ApiList) == 0 {
-		errMsg := "deploy api return empty api list."
-		util.Logger.Error(errMsg)
-		return errors.New(errMsg)
+		return t.reportResult(errors.New(errMsg))
 	}
 
-	//change log file to tmp file
+	//deploy api returns none data filed or empty api list, do nothing
+	if result.Data == nil {
+		util.Logger.Debug("Deploy api return none data field.")
+		return t.reportResult(nil)
+	}
+	result.ConvertDataTo(&deployApiReturnData)
+	if len(deployApiReturnData.ApiList) == 0 {
+		util.Logger.Debug("Deploy api return empty api list.")
+		return t.reportResult(nil)
+	}
+
+	//call dynamic api
+	for _, dynamicApi := range deployApiReturnData.ApiList {
+		if err := t.processDynamicApi(dynamicApi); err != nil {
+			//report failure result
+			return t.reportResult(err)
+			break
+		}
+	}
+
+	//report success result
+	return t.reportResult(nil)
+}
+
+func (t *Deployer) changeLogFile() error {
 	tmpLogFileName := "/tmp/ok_agent-" + strconv.FormatInt(time.Now().UnixNano(), 10) + ".log"
 	tmpLogFileHandle, err := os.OpenFile(tmpLogFileName, os.O_RDWR|os.O_CREATE, 0666)
 	if err != nil {
@@ -58,30 +84,10 @@ func (t *Deployer) Run() error {
 		return errors.New(errMsg)
 	}
 
-	mainLogFileHandle := util.Logger.Out
+	t.mainLogFileHandle = util.Logger.Out
+	t.tmpLogFileHandle = tmpLogFileHandle
 	util.Logger.Out = tmpLogFileHandle
-	defer func() {
-		tmpReader, _ := os.Open(tmpLogFileName)
-		io.Copy(mainLogFileHandle, tmpReader)
-		util.Logger.Out = mainLogFileHandle
-		tmpLogFileHandle.Close()
-		os.Remove(tmpLogFileName)
-	}()
-	util.Logger.Info("Succeed to call deploy api.")
-	util.Logger.Debug("Product version: " + apiResultData.ProductVersion)
-	util.Logger.Debug("Server name: " + apiResultData.ServerName)
-
-	//call dynamic api
-	for _, dynamicApi := range apiResultData.ApiList {
-		if err := t.processDynamicApi(dynamicApi); err != nil {
-			//report failure result
-			return t.reportResult(apiResultData.ReportResultApi, err, tmpLogFileHandle)
-			break
-		}
-	}
-
-	//report success result
-	return t.reportResult(apiResultData.ReportResultApi, nil, tmpLogFileHandle)
+	return nil
 }
 
 func (t *Deployer) processDynamicApi(dynamicApi returndata.DynamicApi) error {
@@ -101,7 +107,7 @@ func (t *Deployer) processDynamicApi(dynamicApi returndata.DynamicApi) error {
 		return errors.New(errMsg)
 	}
 	if result.Data == nil {
-		util.Logger.Debug("Dynamic api returns no data field, nothing to do, go to next api")
+		util.Logger.Debug("Dynamic api returns none data field, nothing to do, go to next api")
 		return nil
 	}
 	result.ConvertDataTo(&itemList)
@@ -156,7 +162,15 @@ func (t *Deployer) processDynamicApi(dynamicApi returndata.DynamicApi) error {
 	return nil
 }
 
-func (t *Deployer) reportResult(dynamicApi returndata.DynamicApi, err error, tmpLogFileHandle *os.File) error {
+func (t *Deployer) reportResult(err error) error {
+	defer func() {
+		tmpReader, _ := os.Open(t.tmpLogFileHandle.Name())
+		io.Copy(t.mainLogFileHandle, tmpReader)
+		util.Logger.Out = t.mainLogFileHandle
+		t.tmpLogFileHandle.Close()
+		os.Remove(t.tmpLogFileHandle.Name())
+	}()
+
 	param := &api.DeployResultParam{ServerUniqueName: config.C.ServerUniqueName}
 	if err != nil {
 		param.ErrorMessage = err.Error()
@@ -164,14 +178,14 @@ func (t *Deployer) reportResult(dynamicApi returndata.DynamicApi, err error, tmp
 		param.Success = true
 	}
 	//read tmp log content as result data
-	if tmpLogFileHandle != nil {
-		logMsg, _ := ioutil.ReadFile(tmpLogFileHandle.Name())
+	if t.tmpLogFileHandle != nil {
+		logMsg, _ := ioutil.ReadFile(t.tmpLogFileHandle.Name())
 		param.Data = string(logMsg)
 	}
 
-	result, err := util.ApiClient.CallApi(dynamicApi.Name, dynamicApi.Version, param)
+	result, err := util.ApiClient.CallApi(t.ReportResultApi.Name, t.ReportResultApi.Version, param)
 	if err != nil {
-		errMsg := "Failed to call result report api: " + dynamicApi.Name + ": " + dynamicApi.Version + ": " + err.Error()
+		errMsg := "Failed to call result report api: " + t.ReportResultApi.Name + ": " + t.ReportResultApi.Version + ": " + err.Error()
 		util.Logger.Error(errMsg)
 		return errors.New(errMsg)
 	}

@@ -109,7 +109,10 @@ func (d *Dispatcher) execTask(msg string) {
 	switch msg {
 	case task.FlagDeploy:
 		util.Logger.Debug("Received deploy task.")
-		deployer := &task.Deployer{Api: d.EntranceApiResult.DeployApi}
+		deployer := &task.Deployer{
+			DeployApi:       d.EntranceApiResult.DeployApi,
+			ReportResultApi: d.EntranceApiResult.ReportResultApi,
+		}
 		deployer.Run()
 
 	case task.FlagReportSysInfo:
