@@ -47,45 +47,31 @@ func (item *File) GetBrief() string {
 func (item *File) Check() error {
 	//check brief
 	if item.Brief == "" {
-		errMsg := "adapter: file brief is empty"
-		util.Logger.Error(errMsg)
-		return errors.New(errMsg)
+		return errors.New("adapter: file brief is empty")
 	}
 
 	//check file type
 	if item.FileType == "" {
-		errMsg := "adapter: file type is empty"
-		util.Logger.Error(errMsg)
-		return errors.New(errMsg)
+		return errors.New("adapter: file type is empty")
 	}
 	if item.FileType != FileTypeDir && item.FileType != FileTypeFile && item.FileType != FileTypeLink {
-		errMsg := "adapter: file type is invalid"
-		util.Logger.Error(errMsg)
-		return errors.New(errMsg)
+		return errors.New("adapter: file type is invalid: " + item.FileType)
 	}
 
 	//check file path
 	if item.FilePath == "" {
-		errMsg := "adapter: file path is empty"
-		util.Logger.Error(errMsg)
-		return errors.New(errMsg)
+		return errors.New("adapter: file path is empty")
 	}
 	if item.FilePath == FilePathRoot {
-		errMsg := "adapter: file path is root"
-		util.Logger.Error(errMsg)
-		return errors.New(errMsg)
+		return errors.New("adapter: file path is root")
 	}
 	if !strings.HasPrefix(item.FilePath, "/") {
-		errMsg := "adapter: file path is relative"
-		util.Logger.Error(errMsg)
-		return errors.New(errMsg)
+		return errors.New("adapter: file path is relative")
 	}
 
 	//check symbol link target
 	if item.FileType == FileTypeLink && item.Target == "" {
-		errMsg := "adapter: symbol link target is empty"
-		util.Logger.Error(errMsg)
-		return errors.New(errMsg)
+		return errors.New("adapter: symbol link target is empty")
 	}
 
 	return nil
@@ -109,8 +95,7 @@ func (item *File) Parse() error {
 	} else {
 		filePerm, err := strconv.ParseUint(item.Permission, 8, 32)
 		if err != nil {
-			util.Logger.Error("File permission is invalid: " + item.Permission)
-			return err
+			return errors.New("adapter: file permission is invalid: " + item.Permission)
 		}
 		item.perm = os.FileMode(filePerm)
 	}
@@ -119,16 +104,12 @@ func (item *File) Parse() error {
 	if item.User != "" && item.Group != "" {
 		groupObj, err := user.LookupGroup(item.Group)
 		if err != nil {
-			errMsg := "adapter: Group does not exist: " + item.Group + ": " + err.Error()
-			util.Logger.Error(errMsg)
-			return errors.New(errMsg)
+			return errors.New("adapter: group does not exist: " + item.Group + ": " + err.Error())
 		}
 
 		userObj, err := user.Lookup(item.User)
 		if err != nil {
-			errMsg := "adapter: user does not exist: " + item.Group + ": " + err.Error()
-			util.Logger.Error(errMsg)
-			return errors.New(errMsg)
+			return errors.New("adapter: user does not exist: " + item.User + ": " + err.Error())
 		}
 		gid, _ := strconv.ParseUint(groupObj.Gid, 10, 32)
 		uid, _ := strconv.ParseUint(userObj.Uid, 10, 32)
@@ -182,8 +163,7 @@ func (item *File) processDir() error {
 	//create dir
 	if item.pathExist == false {
 		if err := os.Mkdir(item.FilePath, item.perm); err != nil {
-			util.Logger.Error("Failed to create directory: " + err.Error())
-			return err
+			return errors.New("adapter: failed to create directory: " + err.Error())
 		}
 		util.Logger.Debug("Succeed to create directory.")
 	} else {
@@ -208,8 +188,7 @@ func (item *File) processFile() error {
 	//create new file
 	if item.pathExist == false {
 		if _, err := os.Create(item.FilePath); err != nil {
-			util.Logger.Error("Failed to create file: " + err.Error())
-			return err
+			return errors.New("adapter: failed to create file: " + err.Error())
 		}
 		util.Logger.Debug("Succeed to create file.")
 		skipWriteContent = item.FileContent == ""
@@ -249,15 +228,13 @@ func (item *File) processLink() error {
 		}
 
 		if err := os.Remove(item.FilePath); err != nil {
-			util.Logger.Error("Failed to remove symbol old symbol link: " + err.Error())
-			return err
+			return errors.New("adapter: failed to remove old symbol link: " + err.Error())
 		}
 	}
 
 	//create link
 	if err := os.Symlink(item.Target, item.FilePath); err != nil {
-		util.Logger.Error("Failed to create link: " + err.Error())
-		return err
+		return errors.New("adapter: failed to create link: " + err.Error())
 	}
 	util.Logger.Debug("Succeed to create symbol link.")
 	return nil
@@ -278,8 +255,7 @@ func (item *File) changeOwnership() error {
 		}
 
 		if err := os.Lchown(item.FilePath, int(item.gid), int(item.gid)); err != nil {
-			util.Logger.Error("Failed to change ownership: " + err.Error())
-			return err
+			return errors.New("adapter: failed to change ownership: " + err.Error())
 		}
 		util.Logger.Debug("Succeed to change ownership.")
 	}
@@ -295,8 +271,7 @@ func (item *File) changePermission() error {
 		}
 
 		if err := os.Chmod(item.FilePath, item.perm); err != nil {
-			util.Logger.Error("Failed to change permission: " + err.Error())
-			return err
+			return errors.New("adapter: failed to change permission: " + err.Error())
 		}
 		util.Logger.Debug("Succeed to change file permission.")
 	}
@@ -312,21 +287,15 @@ func (item *File) checkFilePathExistence() error {
 	switch item.FileType {
 	case FileTypeDir:
 		if stat.Mode().IsDir() == false {
-			errMsg := "adapter: path name already exists, but is not a directory"
-			util.Logger.Error(errMsg)
-			return errors.New(errMsg)
+			return errors.New("adapter: path name already exists, but is not a directory")
 		}
 	case FileTypeFile:
 		if stat.Mode().IsRegular() == false {
-			errMsg := "adapter: path name already exists, but is not a regular file"
-			util.Logger.Error(errMsg)
-			return errors.New(errMsg)
+			return errors.New("adapter: path name already exists, but is not a regular file")
 		}
 	case FileTypeLink:
 		if stat.Mode()&os.ModeSymlink == 0 { // is not symbol link
-			errMsg := "adapter: path name already exists, but is not a symbol link"
-			util.Logger.Error(errMsg)
-			return errors.New(errMsg)
+			return errors.New("adapter: path name already exists, but is not a symbol link")
 		}
 	}
 	item.pathExist = true
@@ -338,17 +307,14 @@ func (item *File) createParentDir() error {
 	stat, err := os.Stat(parentDir)
 	if err == nil { //path exist
 		if stat.Mode().IsDir() == false {
-			errMsg := "adapter: parent directory name already exists, but is not a directory: " + parentDir
-			util.Logger.Error(errMsg)
-			return errors.New(errMsg)
+			return errors.New("adapter: parent directory name already exists, but is not a directory: " + parentDir)
 		}
 		util.Logger.Debug("Skip creating parent directory, because it already exists.")
 		return nil
 	}
 
 	if err := os.MkdirAll(parentDir, item.perm); err != nil {
-		util.Logger.Error("Failed to create parent directory: " + parentDir + "\n" + err.Error())
-		return err
+		return errors.New("adapter: failed to create parent directory: " + parentDir + "\n" + err.Error())
 	}
 	util.Logger.Debug("Succeed to create parent directory: " + parentDir)
 	return nil
@@ -361,8 +327,7 @@ func (item *File) writeContent() error {
 	}
 
 	if err := ioutil.WriteFile(item.FilePath, []byte(item.FileContent), item.perm); err != nil {
-		util.Logger.Error("Failed to write content: " + err.Error())
-		return err
+		return errors.New("adapter: failed to write content: " + err.Error())
 	}
 	util.Logger.Debug("Succeed to write content.")
 	return nil

@@ -95,6 +95,7 @@ func (t *Deployer) processDynamicApi(dynamicApi returndata.DynamicApi) error {
 
 	//call dynamic api
 	param := &api.EntranceApiParam{ServerUniqueName: config.C.ServerUniqueName}
+	util.Logger.Info("Start to call dynamic api: " + dynamicApi.Name + "/" + dynamicApi.Version)
 	result, err := util.ApiClient.CallApi(dynamicApi.Name, dynamicApi.Version, param)
 	if err != nil {
 		errMsg := "Failed to call api: " + dynamicApi.Name + ": " + dynamicApi.Version + ": " + err.Error()
@@ -111,7 +112,7 @@ func (t *Deployer) processDynamicApi(dynamicApi returndata.DynamicApi) error {
 		return nil
 	}
 	result.ConvertDataTo(&itemList)
-	util.Logger.Info("Succeed to call dynamic api: ", dynamicApi.Name)
+	util.Logger.Info("Succeed to call dynamic api: " + dynamicApi.Name + "/" + dynamicApi.Version)
 
 	//cast item list to native go type
 	for _, mapItem := range itemList {
@@ -141,6 +142,7 @@ func (t *Deployer) processDynamicApi(dynamicApi returndata.DynamicApi) error {
 		}
 
 		//process item
+		util.Logger.Info("Start to process: " + item.GetBrief())
 		if err := item.Check(); err != nil {
 			errMsg := "Failed to check item: " + item.GetBrief() + ": " + err.Error()
 			util.Logger.Error(errMsg)

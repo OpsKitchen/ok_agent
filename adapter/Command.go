@@ -35,38 +35,28 @@ func (item *Command) GetBrief() string {
 func (item *Command) Check() error {
 	//check brief
 	if item.Brief == "" {
-		errMsg := "adapter: command brief is empty"
-		util.Logger.Error(errMsg)
-		return errors.New(errMsg)
+		return errors.New("adapter: command brief is empty")
 	}
 
 	//check command
 	if item.Command == "" {
-		errMsg := "adapter: command is empty"
-		util.Logger.Error(errMsg)
-		return errors.New(errMsg)
+		return errors.New("adapter: command is empty")
 	}
 
 	//check cwd
 	if item.Cwd != "" {
 		stat, err := os.Stat(item.Cwd)
 		if err != nil {
-			errMsg := "adapter: cwd does not exist"
-			util.Logger.Error(errMsg)
-			return errors.New(errMsg)
+			return errors.New("adapter: cwd does not exist")
 		} else if stat.IsDir() == false {
-			errMsg := "adapter: cwd is not a directory"
-			util.Logger.Error(errMsg)
-			return errors.New(errMsg)
+			return errors.New("adapter: cwd is not a directory")
 		}
 	}
 
 	//check user
 	if item.User != "" {
 		if _, err := user.Lookup(item.User); err != nil {
-			errMsg := "adapter: user does not exist: " + item.User + ": " + err.Error()
-			util.Logger.Error(errMsg)
-			return errors.New(errMsg)
+			return errors.New("adapter: user does not exist: " + item.User + ": " + err.Error())
 		}
 	}
 	return nil
@@ -82,11 +72,11 @@ func (item *Command) Parse() error {
 func (item *Command) Process() error {
 	//check if necessary to run command
 	if item.RunIf != "" && item.fastRun(item.RunIf) == false {
-		util.Logger.Info("Skip running: " + item.Brief + ", because 'RunIf' retunrs false")
+		util.Logger.Info("Skip running, because 'RunIf' retunrs false")
 		return nil
 	}
 	if item.NotRunIf != "" && item.fastRun(item.NotRunIf) == true {
-		util.Logger.Info("Skip running: " + item.Brief + ", because 'NotRunIf' returns true")
+		util.Logger.Info("Skip running, because 'NotRunIf' returns true")
 		return nil
 	}
 
@@ -134,8 +124,7 @@ func (item *Command) runWithMessage() error {
 	errPipe, _ := cmd.StderrPipe()
 
 	if err := cmd.Start(); err != nil {
-		util.Logger.Error("Failed to start default shell: " + DefaultShell + "\n" + err.Error())
-		return err
+		return errors.New("adapter: failed to start default shell: " + DefaultShell + "\n" + err.Error())
 	}
 
 	//real-time output of std out
@@ -161,11 +150,10 @@ func (item *Command) runWithMessage() error {
 	}
 
 	if err := cmd.Wait(); err != nil {
-		util.Logger.Error("Failed to run command: " + errorLineAll)
 		if errorLineAll != "" {
-			return errors.New(errorLineAll)
+			return errors.New("adapter: failed to run command: " + errorLineAll)
 		}
-		return err
+		return errors.New("adapter: failed to run command: " + err.Error())
 	} else {
 		util.Logger.Debug("Succeed to run command.")
 		return nil

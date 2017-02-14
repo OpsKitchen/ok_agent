@@ -35,44 +35,32 @@ func (item *Augeas) GetBrief() string {
 func (item *Augeas) Check() error {
 	//check brief
 	if item.Brief == "" {
-		errMsg := "adapter: augeas brief is empty"
-		util.Logger.Error(errMsg)
-		return errors.New(errMsg)
+		return errors.New("adapter: augeas brief is empty")
 	}
 
 	//check action
 	if item.Action != "" && item.Action != ActionRemove && item.Action != ActionSet {
-		errMsg := "adapter: augeas action is invalid"
-		util.Logger.Error(errMsg)
-		return errors.New(errMsg)
+		return errors.New("adapter: augeas action is invalid")
 	}
 
 	//check file path
 	if item.FilePath == "" {
-		errMsg := "adapter: augeas config file path is empty"
-		util.Logger.Error(errMsg)
-		return errors.New(errMsg)
+		return errors.New("adapter: augeas config file path is empty")
 	}
 
 	//check lens
 	if item.Lens == "" {
-		errMsg := "adapter: augeas lens is empty"
-		util.Logger.Error(errMsg)
-		return errors.New(errMsg)
+		return errors.New("adapter: augeas lens is empty")
 	}
 
 	//check option path
 	if item.OptionPath == "" {
-		errMsg := "adapter: augeas config option path is empty"
-		util.Logger.Error(errMsg)
-		return errors.New(errMsg)
+		return errors.New("adapter: augeas config option path is empty")
 	}
 
 	//check option value, empty value are supported in augeas 1.5
 	if item.OptionValue == "" {
-		errMsg := "adapter: augeas config option value is empty"
-		util.Logger.Error(errMsg)
-		return errors.New(errMsg)
+		return errors.New("adapter: augeas config option value is empty")
 	}
 
 	return nil
@@ -113,25 +101,21 @@ func (item *Augeas) saveAugeas() error {
 	//new augeas
 	ag, err := augeas.New("/", "", augeas.NoLoad)
 	if err != nil {
-		util.Logger.Error("Failed to initialize augeas sdk: " + err.Error())
-		return err
+		return errors.New("adapter: failed to initialize augeas sdk: " + err.Error())
 	}
 
 	//set /augeas/load/lens and /augeas/load/incl
 	err = ag.Set(LoadPath+item.Lens+LoadPathLens, item.lensFile)
 	if err != nil {
-		util.Logger.Error("Failed to set lens: " + err.Error())
-		return err
+		return errors.New("adapter: failed to set lens: " + err.Error())
 	}
 	err = ag.Set(LoadPath+item.Lens+LoadPathIncl, item.FilePath)
 	if err != nil {
-		util.Logger.Error("Failed to set incl: " + err.Error())
-		return err
+		return errors.New("adapter: failed to set incl: " + err.Error())
 	}
 	err = ag.Load()
 	if err != nil {
-		util.Logger.Error("Failed to load lens: " + err.Error())
-		return err
+		return errors.New("adapter: failed to load lens: " + err.Error())
 	}
 
 	//remove action
@@ -145,8 +129,7 @@ func (item *Augeas) saveAugeas() error {
 		//set option value
 		err = ag.Set(item.fullOptionPath, item.OptionValue)
 		if err != nil {
-			util.Logger.Error("Failed to set option path and value: " + err.Error())
-			return err
+			return errors.New("adapter: failed to set option path and value: " + err.Error())
 		}
 		util.Logger.Debug("Succeed to set " + item.fullOptionPath)
 	} else if item.Action == ActionRemove { //action = "rm"
@@ -157,8 +140,7 @@ func (item *Augeas) saveAugeas() error {
 		}
 		num := ag.Remove(item.fullOptionPath)
 		if num == 0 {
-			util.Logger.Error("Failed to remove option: " + err.Error())
-			return err
+			return errors.New("adapter: failed to remove option: " + err.Error())
 		}
 		util.Logger.Debug("Succeed to remove " + item.fullOptionPath)
 	}
@@ -167,8 +149,7 @@ func (item *Augeas) saveAugeas() error {
 	err = ag.Save()
 	ag.Close()
 	if err != nil {
-		util.Logger.Error("Failed to save change of config file: " + err.Error())
-		return err
+		return errors.New("adapter: failed to save change of config file: " + err.Error())
 	}
 	util.Logger.Debug("Succeed to save change of config file.")
 	return nil
