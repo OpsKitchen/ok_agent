@@ -42,7 +42,7 @@ func (t *SysInfoReporter) Run() error {
 		util.Logger.Error(errMsg)
 		return errors.New(errMsg)
 	}
-	util.Logger.Info("Succeed to call sys info report api.")
+	util.Logger.Info("Successfully called sys info report api.")
 	return nil
 }
 

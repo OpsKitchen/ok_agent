@@ -47,7 +47,7 @@ Demo output is like this:
 
     [root@dev67 ok_agent]# ./ok_agent -c ok_agent.json
     INFO[0000] Runing opskitchen agent 1.1.0
-    INFO[0000] Succeed to call entrance api.
+    INFO[0000] Successfully called entrance api.
     INFO[0000] Processing file: /etc/yum.repos.d/test.repo
     INFO[0000] Processing file: /etc/php.ini
     INFO[0000] Processing file: /etc/sysconfig/beanstalkd

@@ -35,7 +35,7 @@ func (t *Deployer) Run() error {
 	param := &api.EntranceApiParam{ServerUniqueName: config.C.ServerUniqueName}
 	util.Logger.Info("Start to call deploy api...")
 	result, err := util.ApiClient.CallApi(t.DeployApi.Name, t.DeployApi.Version, param)
-	util.Logger.Info("Succeed to call deploy api.")
+	util.Logger.Info("Successfully called deploy api.")
 	util.Logger.Debug("Product version: " + deployApiReturnData.ProductVersion)
 	util.Logger.Debug("Server name: " + deployApiReturnData.ServerName)
 
@@ -111,7 +111,7 @@ func (t *Deployer) processDynamicApi(dynamicApi returndata.DynamicApi) error {
 		return nil
 	}
 	result.ConvertDataTo(&itemList)
-	util.Logger.Info("Succeed to call dynamic api: " + dynamicApi.Name + "/" + dynamicApi.Version)
+	util.Logger.Info("Successfully called dynamic api: " + dynamicApi.Name + "/" + dynamicApi.Version)
 
 	//cast item list to native go type
 	for _, mapItem := range itemList {

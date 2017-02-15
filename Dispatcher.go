@@ -45,7 +45,7 @@ func (d *Dispatcher) Dispatch() {
 		return
 	}
 	result.ConvertDataTo(&d.EntranceApiResult)
-	util.Logger.Info("Succeed to call entrance api.")
+	util.Logger.Info("Successfully called entrance api.")
 	go d.reportSysInfo()
 	go d.updateAgent()
 	d.listenWebSocket()
