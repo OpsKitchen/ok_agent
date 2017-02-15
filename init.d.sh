@@ -45,7 +45,7 @@ start() {
 stop() {
     echo -n $"Stopping $prog: "
     # stop it here, often "killproc $prog"
-    killproc ${prog} -INT
+    killproc ${prog} -KILL
     retval=$?
     echo
     [ ${retval} -eq 0 ] && rm -f ${lockfile} && rm -f ${pidfile}
