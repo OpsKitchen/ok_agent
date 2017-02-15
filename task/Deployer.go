@@ -116,15 +116,19 @@ func (t *Deployer) processDynamicApi(dynamicApi returndata.DynamicApi) error {
 	//cast item list to native go type
 	for _, mapItem := range itemList {
 		var item adapter.AdapterInterface
+		var returnDateType string
 		switch dynamicApi.ReturnDataType {
 		case returndata.AugeasList:
 			item = &adapter.Augeas{}
+			returnDateType = "Augeas"
 
 		case returndata.CommandList:
 			item = &adapter.Command{}
+			returnDateType = "Command"
 
 		case returndata.FileList:
 			item = &adapter.File{}
+			returnDateType = "File"
 
 		default:
 			errMsg := "Unsupported list: " + dynamicApi.ReturnDataType
@@ -140,8 +144,8 @@ func (t *Deployer) processDynamicApi(dynamicApi returndata.DynamicApi) error {
 			return errors.New(errMsg)
 		}
 
+		util.Logger.Info("Start to process [ " + returnDateType + " ]: " + item.GetBrief())
 		//process item
-		util.Logger.Info("Start to process: " + item.GetBrief())
 		if err := item.Check(); err != nil {
 			errMsg := "Failed to check item: " + item.GetBrief() + ": " + err.Error()
 			util.Logger.Error(errMsg)
