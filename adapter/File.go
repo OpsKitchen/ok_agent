@@ -165,9 +165,9 @@ func (item *File) processDir() error {
 		if err := os.Mkdir(item.FilePath, item.perm); err != nil {
 			return errors.New("adapter: failed to create directory: " + err.Error())
 		}
-		util.Logger.Debug("Succeed to create directory.")
+		util.Logger.Info("Succeed to create directory.")
 	} else {
-		util.Logger.Debug("Skip creating directory, because it already exists.")
+		util.Logger.Info("Skip creating directory, because it already exists.")
 	}
 
 	//change permission
@@ -190,10 +190,10 @@ func (item *File) processFile() error {
 		if _, err := os.Create(item.FilePath); err != nil {
 			return errors.New("adapter: failed to create file: " + err.Error())
 		}
-		util.Logger.Debug("Succeed to create file.")
+		util.Logger.Info("Succeed to create file.")
 		skipWriteContent = item.FileContent == ""
 	} else {
-		util.Logger.Debug("Skip creating, because it already exists.")
+		util.Logger.Info("Skip creating, because it already exists.")
 		if item.FileContent == "" { //content is empty, check if NoTruncate is true
 			skipWriteContent = item.NoTruncate
 		} //else, content not empty, ignore NoTruncate, skipWriteContent = false
@@ -223,7 +223,7 @@ func (item *File) processLink() error {
 	//remove link if necessary
 	if item.pathExist == true {
 		if linkTarget, _ := os.Readlink(item.FilePath); linkTarget == item.Target {
-			util.Logger.Debug("Skip creating symbol link, because it already exists with correct target .")
+			util.Logger.Info("Skip creating symbol link, because it already exists with correct target .")
 			return nil
 		}
 
@@ -236,7 +236,7 @@ func (item *File) processLink() error {
 	if err := os.Symlink(item.Target, item.FilePath); err != nil {
 		return errors.New("adapter: failed to create link: " + err.Error())
 	}
-	util.Logger.Debug("Succeed to create symbol link.")
+	util.Logger.Info("Succeed to create symbol link.")
 	return nil
 }
 
@@ -248,7 +248,7 @@ func (item *File) changeOwnership() error {
 			if convertedOk {
 				//user and group is already right, no need to change
 				if item.gid == stat_t.Gid && item.uid == stat_t.Uid {
-					util.Logger.Debug("Skip changing ownership, because file ownership is correct.")
+					util.Logger.Info("Skip changing ownership, because file ownership is correct.")
 					return nil
 				}
 			}
@@ -257,7 +257,7 @@ func (item *File) changeOwnership() error {
 		if err := os.Lchown(item.FilePath, int(item.gid), int(item.gid)); err != nil {
 			return errors.New("adapter: failed to change ownership: " + err.Error())
 		}
-		util.Logger.Debug("Succeed to change ownership.")
+		util.Logger.Info("Succeed to change ownership.")
 	}
 	return nil
 }
@@ -266,14 +266,14 @@ func (item *File) changePermission() error {
 	if item.Permission != "" {
 		stat, _ := os.Stat(item.FilePath)
 		if stat.Mode().Perm() == item.perm {
-			util.Logger.Debug("Skip changing permission, because file permission is correct.")
+			util.Logger.Info("Skip changing permission, because file permission is correct.")
 			return nil
 		}
 
 		if err := os.Chmod(item.FilePath, item.perm); err != nil {
 			return errors.New("adapter: failed to change permission: " + err.Error())
 		}
-		util.Logger.Debug("Succeed to change file permission.")
+		util.Logger.Info("Succeed to change file permission.")
 	}
 	return nil
 }
@@ -309,26 +309,26 @@ func (item *File) createParentDir() error {
 		if stat.Mode().IsDir() == false {
 			return errors.New("adapter: parent directory name already exists, but is not a directory: " + parentDir)
 		}
-		util.Logger.Debug("Skip creating parent directory, because it already exists.")
+		util.Logger.Info("Skip creating parent directory, because it already exists.")
 		return nil
 	}
 
 	if err := os.MkdirAll(parentDir, item.perm); err != nil {
 		return errors.New("adapter: failed to create parent directory: " + parentDir + "\n" + err.Error())
 	}
-	util.Logger.Debug("Succeed to create parent directory: " + parentDir)
+	util.Logger.Info("Succeed to create parent directory: " + parentDir)
 	return nil
 }
 
 func (item *File) writeContent() error {
 	if contentBytes, _ := ioutil.ReadFile(item.FilePath); item.FileContent == string(contentBytes) {
-		util.Logger.Debug("Skip writing content, because it is correct.")
+		util.Logger.Info("Skip writing content, because it is correct.")
 		return nil
 	}
 
 	if err := ioutil.WriteFile(item.FilePath, []byte(item.FileContent), item.perm); err != nil {
 		return errors.New("adapter: failed to write content: " + err.Error())
 	}
-	util.Logger.Debug("Succeed to write content.")
+	util.Logger.Info("Succeed to write content.")
 	return nil
 }

@@ -122,7 +122,7 @@ func (item *Augeas) saveAugeas() error {
 	if item.Action == ActionSet { //action = "set"
 		oldOptionValue, err := ag.Get(item.fullOptionPath)
 		if err == nil && oldOptionValue == item.OptionValue {
-			util.Logger.Debug("Skip setting config option value, because it is correct.")
+			util.Logger.Info("Skip setting config option value, because it is correct.")
 			return nil
 		}
 
@@ -135,7 +135,7 @@ func (item *Augeas) saveAugeas() error {
 	} else if item.Action == ActionRemove { //action = "rm"
 		_, err = ag.Get(item.fullOptionPath)
 		if err != nil {
-			util.Logger.Debug("Skip removing config option, because it does not exists.")
+			util.Logger.Info("Skip removing config option, because it does not exists.")
 			return nil
 		}
 		num := ag.Remove(item.fullOptionPath)
@@ -151,6 +151,6 @@ func (item *Augeas) saveAugeas() error {
 	if err != nil {
 		return errors.New("adapter: failed to save change of config file: " + err.Error())
 	}
-	util.Logger.Debug("Succeed to save change of config file.")
+	util.Logger.Info("Succeed to save change of config file.")
 	return nil
 }

@@ -33,7 +33,7 @@ func (t *Deployer) Run() error {
 
 	//call deploy api
 	param := &api.EntranceApiParam{ServerUniqueName: config.C.ServerUniqueName}
-	util.Logger.Info("Calling deploy api...")
+	util.Logger.Info("Start to call deploy api...")
 	result, err := util.ApiClient.CallApi(t.DeployApi.Name, t.DeployApi.Version, param)
 	util.Logger.Info("Succeed to call deploy api.")
 	util.Logger.Debug("Product version: " + deployApiReturnData.ProductVersion)
@@ -95,7 +95,6 @@ func (t *Deployer) processDynamicApi(dynamicApi returndata.DynamicApi) error {
 
 	//call dynamic api
 	param := &api.EntranceApiParam{ServerUniqueName: config.C.ServerUniqueName}
-	util.Logger.Info("Start to call dynamic api: " + dynamicApi.Name + "/" + dynamicApi.Version)
 	result, err := util.ApiClient.CallApi(dynamicApi.Name, dynamicApi.Version, param)
 	if err != nil {
 		errMsg := "Failed to call api: " + dynamicApi.Name + ": " + dynamicApi.Version + ": " + err.Error()
@@ -159,7 +158,6 @@ func (t *Deployer) processDynamicApi(dynamicApi returndata.DynamicApi) error {
 			util.Logger.Debug(item)
 			return errors.New(errMsg)
 		}
-		util.Logger.Info("Succeed to process: " + item.GetBrief())
 	}
 	return nil
 }

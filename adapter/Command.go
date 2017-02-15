@@ -155,7 +155,7 @@ func (item *Command) runWithMessage() error {
 		}
 		return errors.New("adapter: failed to run command: " + err.Error())
 	} else {
-		util.Logger.Debug("Succeed to run command.")
+		util.Logger.Info("Succeed to run command.")
 		return nil
 	}
 }
