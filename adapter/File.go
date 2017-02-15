@@ -165,7 +165,7 @@ func (item *File) processDir() error {
 		if err := os.Mkdir(item.FilePath, item.perm); err != nil {
 			return errors.New("adapter: failed to create directory: " + err.Error())
 		}
-		util.Logger.Info("Successful created directory.")
+		util.Logger.Info("Successfully created directory.")
 	} else {
 		util.Logger.Info("Skip to create directory, because it already exists.")
 	}
@@ -190,7 +190,7 @@ func (item *File) processFile() error {
 		if _, err := os.Create(item.FilePath); err != nil {
 			return errors.New("adapter: failed to create file: " + err.Error())
 		}
-		util.Logger.Info("Successful created file.")
+		util.Logger.Info("Successfully created file.")
 		skipWriteContent = item.FileContent == ""
 	} else {
 		util.Logger.Info("Skip to create, because it already exists.")
@@ -236,7 +236,7 @@ func (item *File) processLink() error {
 	if err := os.Symlink(item.Target, item.FilePath); err != nil {
 		return errors.New("adapter: failed to create link: " + err.Error())
 	}
-	util.Logger.Info("Successful created symbol link.")
+	util.Logger.Info("Successfully created symbol link.")
 	return nil
 }
 
@@ -257,7 +257,7 @@ func (item *File) changeOwnership() error {
 		if err := os.Lchown(item.FilePath, int(item.gid), int(item.gid)); err != nil {
 			return errors.New("adapter: failed to change ownership: " + err.Error())
 		}
-		util.Logger.Info("Successful changed ownership.")
+		util.Logger.Info("Successfully changed ownership.")
 	}
 	return nil
 }
@@ -273,7 +273,7 @@ func (item *File) changePermission() error {
 		if err := os.Chmod(item.FilePath, item.perm); err != nil {
 			return errors.New("adapter: failed to change permission: " + err.Error())
 		}
-		util.Logger.Info("Successful changed file permission.")
+		util.Logger.Info("Successfully changed file permission.")
 	}
 	return nil
 }
@@ -316,7 +316,7 @@ func (item *File) createParentDir() error {
 	if err := os.MkdirAll(parentDir, item.perm); err != nil {
 		return errors.New("adapter: failed to create parent directory: " + parentDir + "\n" + err.Error())
 	}
-	util.Logger.Info("Successful created parent directory: " + parentDir)
+	util.Logger.Info("Successfully created parent directory: " + parentDir)
 	return nil
 }
 
@@ -329,6 +329,6 @@ func (item *File) writeContent() error {
 	if err := ioutil.WriteFile(item.FilePath, []byte(item.FileContent), item.perm); err != nil {
 		return errors.New("adapter: failed to write content: " + err.Error())
 	}
-	util.Logger.Info("Successful wrote content.")
+	util.Logger.Info("Successfully wrote content.")
 	return nil
 }
