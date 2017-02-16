@@ -35,7 +35,6 @@ func (t *Deployer) Run() error {
 	param := &api.EntranceApiParam{ServerUniqueName: config.C.ServerUniqueName}
 	util.Logger.Info("Start to call deploy api...")
 	result, err := util.ApiClient.CallApi(t.DeployApi.Name, t.DeployApi.Version, param)
-	util.Logger.Info("Successfully called deploy api.")
 	util.Logger.Debug("Product version: " + deployApiReturnData.ProductVersion)
 	util.Logger.Debug("Server name: " + deployApiReturnData.ServerName)
 
@@ -50,15 +49,16 @@ func (t *Deployer) Run() error {
 		util.Logger.Error(errMsg)
 		return t.reportResult(errors.New(errMsg))
 	}
+	util.Logger.Info("Successfully called deploy api.")
 
 	//deploy api returns none data filed or empty api list, do nothing
 	if result.Data == nil {
-		util.Logger.Debug("Deploy api return none data field.")
+		util.Logger.Info("Deploy api return none data field.")
 		return t.reportResult(nil)
 	}
 	result.ConvertDataTo(&deployApiReturnData)
 	if len(deployApiReturnData.ApiList) == 0 {
-		util.Logger.Debug("Deploy api return empty api list.")
+		util.Logger.Info("Deploy api return empty api list.")
 		return t.reportResult(nil)
 	}
 
