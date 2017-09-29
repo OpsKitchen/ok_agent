@@ -254,7 +254,7 @@ func (item *File) changeOwnership() error {
 			}
 		}
 
-		if err := os.Lchown(item.FilePath, int(item.gid), int(item.gid)); err != nil {
+		if err := os.Lchown(item.FilePath, int(item.uid), int(item.gid)); err != nil {
 			return errors.New("adapter: failed to change ownership: " + err.Error())
 		}
 		util.Logger.Info("Successfully changed ownership.")
